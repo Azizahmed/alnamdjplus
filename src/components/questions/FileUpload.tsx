@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { QuestionProps } from './ShortAnswer';
-import { config } from '../../config';
+import { api } from '../../services/api';
 
 export const FileUpload: React.FC<QuestionProps> = ({
   question,
@@ -28,67 +28,25 @@ export const FileUpload: React.FC<QuestionProps> = ({
         return;
       }
 
-      if (!uploadContext?.token) {
-        onChange({ text: file.name });
-        return;
-      }
-
       setIsUploading(true);
       setUploadError('');
 
       try {
-        const createRes = await fetch(
-          `${config.backendUrl}/api/public/forms/${uploadContext.token}/uploads`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              question_id: question.id,
-              filename: file.name,
-              content_type: file.type || undefined,
-              size_bytes: file.size
-            })
-          }
-        );
+        const path = uploadContext?.token 
+          ? `uploads/${uploadContext.token}/${Date.now()}-${file.name}`
+          : `uploads/${Date.now()}-${file.name}`;
 
-        if (!createRes.ok) {
-          const err = await createRes.json().catch(() => ({}));
-          throw new Error(err.detail || 'Failed to create upload');
-        }
-
-        const createData = await createRes.json();
-        const uploadUrl = createData.upload_url;
-
-        const putRes = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: file.type ? { 'Content-Type': file.type } : undefined,
-          body: file
-        });
-
-        if (!putRes.ok) {
-          throw new Error('Failed to upload file');
-        }
-
-        await fetch(
-          `${config.backendUrl}/api/public/forms/${uploadContext.token}/uploads/${createData.upload_id}/complete`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content_type: file.type || undefined,
-              size_bytes: file.size
-            })
-          }
-        );
+        const result = await api.storage.upload('form-uploads', file, path);
 
         onChange({
           text: file.name,
           files: [
             {
-              upload_id: createData.upload_id,
+              upload_id: result.key,
               filename: file.name,
               content_type: file.type || undefined,
-              size_bytes: file.size
+              size_bytes: file.size,
+              url: result.url
             }
           ]
         });

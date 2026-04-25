@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { config, getAuthHeaders } from '../config';
+import { api } from '../services/api';
 import { BarChart } from '../components/analytics/BarChart';
 import { FunnelChart } from '../components/analytics/FunnelChart';
 import { FilterPanel, AnalyticsFilters } from '../components/analytics/FilterPanel';
@@ -74,14 +74,11 @@ export const FormAnalyticsNew: React.FC = () => {
 
   const loadForm = async () => {
     try {
-      const res = await fetch(`${config.backendUrl}/api/forms/${formId}`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-
-      if (!res.ok) throw new Error('Failed to load form');
-      const data = await res.json();
-      setFormData(data);
+      const { data, error } = await api.forms.get(formId!);
+      if (error) throw new Error('Failed to load form');
+      if (data?.[0]) {
+        setFormData(data[0]);
+      }
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -92,40 +89,13 @@ export const FormAnalyticsNew: React.FC = () => {
     try {
       setLoading(true);
       
-      // Calculate date range
       const dateParams = getDateParams();
-      const filterParams = getFilterParams();
-      const queryString = new URLSearchParams({ ...dateParams, ...filterParams }).toString();
-
-      // Load all analytics data in parallel
-      const [timeSeriesRes, funnelRes, summaryRes] = await Promise.all([
-        fetch(
-          `${config.backendUrl}/api/forms/${formId}/analytics/timeseries?${queryString}`,
-          { headers: getAuthHeaders(), credentials: 'include' }
-        ),
-        fetch(
-          `${config.backendUrl}/api/forms/${formId}/analytics/funnel?${queryString}`,
-          { headers: getAuthHeaders(), credentials: 'include' }
-        ),
-        fetch(
-          `${config.backendUrl}/api/forms/${formId}/analytics/summary`,
-          { headers: getAuthHeaders(), credentials: 'include' }
-        )
+      
+      const [summaryResult] = await Promise.all([
+        api.analytics.getSummary(formId!),
       ]);
 
-      if (!timeSeriesRes.ok || !funnelRes.ok || !summaryRes.ok) {
-        throw new Error('Failed to load analytics');
-      }
-
-      const [timeSeriesData, funnelData, summaryData] = await Promise.all([
-        timeSeriesRes.json(),
-        funnelRes.json(),
-        summaryRes.json()
-      ]);
-
-      setTimeSeries(timeSeriesData);
-      setFunnel(funnelData);
-      setSummary(summaryData);
+      setSummary(summaryResult);
       setLoading(false);
     } catch (err: any) {
       setError(err.message);

@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { QuestionRenderer } from '../components/QuestionRenderer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { config } from '../config';
+import { api } from '../services/api';
 
 export const PublicForm: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -56,17 +56,15 @@ export const PublicForm: React.FC = () => {
 
   const loadForm = async () => {
     try {
-      const response = await fetch(`${config.backendUrl}/api/public/forms/${token}`);
+      const { data, error } = await api.publicForms.get(token!);
+      if (error) throw new Error('Form not found or no longer accepting responses');
       
-      if (!response.ok) {
-        throw new Error('Form not found or no longer accepting responses');
-      }
-
-      const data = await response.json();
-      setFormData(data.form);
+      const form = data?.[0]?.forms;
+      if (!form) throw new Error('Form not found');
+      
+      setFormData(form);
       setLoading(false);
       
-      // Track form view
       trackEvent('form_viewed');
     } catch (err: any) {
       setError(err.message);
@@ -74,20 +72,15 @@ export const PublicForm: React.FC = () => {
     }
   };
 
-  const trackEvent = async (eventType: string, questionId?: number, timeSpent?: number) => {
+  const trackEvent = async (eventType: string, questionId?: string, timeSpent?: number) => {
     try {
-      await fetch(`${config.backendUrl}/api/public/forms/${token}/track`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: eventType,
-          session_id: sessionId,
-          question_id: questionId,
-          time_spent: timeSpent
-        })
+      const formId = formData?.id || token;
+      await api.publicForms.trackEvent(formId, eventType, {
+        session_id: sessionId,
+        question_id: questionId,
+        time_spent: timeSpent
       });
     } catch (err) {
-      // Silently fail - don't break form for analytics
       console.error('Analytics tracking failed:', err);
     }
   };
@@ -144,7 +137,7 @@ export const PublicForm: React.FC = () => {
 
   const visibleQuestionIds = formData ? evaluateConditionalLogic() : new Set();
 
-  const scheduleAutosave = (nextAnswers: Record<number, any>) => {
+  const scheduleAutosave = (nextAnswers: Record<string, any>) => {
     if (submitted || submitting || !formData) return;
     if (autosaveTimerRef.current) {
       window.clearTimeout(autosaveTimerRef.current);
@@ -156,20 +149,16 @@ export const PublicForm: React.FC = () => {
       
       autosaveInFlightRef.current = true;
       try {
-        const payload = {
+        const answerArray = Object.entries(nextAnswers).map(([questionId, value]) => ({
+          question_id: questionId,
+          value: value
+        }));
+        
+        await api.responses.submit(token!, answerArray, {
           session_id: sessionId,
           form_version: formData?.version,
-          answers: Object.entries(nextAnswers).map(([questionId, value]) => ({
-            question_id: parseInt(questionId, 10),
-            answer_value: value
-          })),
+          status: 'draft',
           ...utmParams
-        };
-        
-        await fetch(`${config.backendUrl}/api/public/forms/${token}/autosave`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
         });
       } catch (err) {
         console.error('Autosave failed:', err);
@@ -208,14 +197,12 @@ export const PublicForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required questions
     const visibleQuestions = formData.questions.filter((q: any) => visibleQuestionIds.has(q.id));
       const missingRequired = visibleQuestions.filter((q: any) => {
         if (!q.required) return false;
         const answer = answers[q.id];
         if (!answer) return true;
         
-        // Check if answer is empty based on type
         if (answer.text !== undefined) return !answer.text;
         if (answer.number !== undefined) return answer.number === null;
         if (answer.choices !== undefined) return answer.choices.length === 0;
@@ -226,7 +213,7 @@ export const PublicForm: React.FC = () => {
       });
 
     if (missingRequired.length > 0) {
-      const missingNames = missingRequired.map((q: any) => q.question_text).slice(0, 3);
+      const missingNames = missingRequired.map((q: any) => q.label).slice(0, 3);
       const moreCount = missingRequired.length - 3;
       let errorMsg = `Please complete: ${missingNames.join(', ')}`;
       if (moreCount > 0) {
@@ -240,32 +227,21 @@ export const PublicForm: React.FC = () => {
     setError('');
 
     try {
-      const submissionData = {
-        answers: Object.entries(answers).map(([questionId, value]) => ({
-          question_id: parseInt(questionId),
-          answer_value: value
-        })),
+      const answerArray = Object.entries(answers).map(([questionId, value]) => ({
+        question_id: questionId,
+        value: value
+      }));
+
+      const { data, error: submitError } = await api.responses.submit(token!, answerArray, {
         session_id: sessionId,
         ...utmParams
-      };
-
-      const response = await fetch(`${config.backendUrl}/api/public/forms/${token}/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(submissionData)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit form');
-      }
+      if (submitError) throw new Error(submitError.message || 'Failed to submit form');
 
-      // Track form completion
       trackEvent('form_submitted_complete');
 
-      const data = await response.json();
-      setThankYouMessage(data.message);
+      setThankYouMessage(data?.message || 'Your response has been submitted successfully.');
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message || 'Failed to submit form. Please try again.');

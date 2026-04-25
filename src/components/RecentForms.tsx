@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { config, getAuthHeaders } from '../config';
+import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface FormMetadata {
   id: number;
@@ -15,6 +16,7 @@ interface RecentFormsProps {
 }
 
 export const RecentForms: React.FC<RecentFormsProps> = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [recentForms, setRecentForms] = useState<FormMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,24 +48,15 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
   }, [isOpen]);
 
   const loadRecentForms = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms?limit=10&sort=updated_at`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load recent forms');
-      }
-
-      const data = await response.json();
+      const { data, error } = await api.forms.list(user.id);
+      if (error) throw error;
       
-      // Transform the data to include questions_count
-      const forms = (Array.isArray(data) ? data : []).map((form: any) => ({
+      const forms = (data || []).map((form: any) => ({
         ...form,
-        questions_count: form.questions?.length || 0
+        questions_count: form.form_questions?.length || 0
       }));
       
       setRecentForms(forms);

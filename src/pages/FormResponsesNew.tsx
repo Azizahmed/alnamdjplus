@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { config, getAuthHeaders } from '../config';
+import { api } from '../services/api';
 import { FormChatPanel } from '../components/FormChatPanel';
 import { useSidebar } from '../contexts/SidebarContext';
 
@@ -62,14 +62,11 @@ export const FormResponsesNew: React.FC = () => {
 
   const loadForm = async () => {
     try {
-      const res = await fetch(`${config.backendUrl}/api/forms/${formId}`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-
-      if (!res.ok) throw new Error('Failed to load form');
-      const data = await res.json();
-      setFormData(data);
+      const { data, error } = await api.forms.get(formId!);
+      if (error) throw new Error('Failed to load form');
+      if (data?.[0]) {
+        setFormData(data[0]);
+      }
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -79,19 +76,10 @@ export const FormResponsesNew: React.FC = () => {
   const loadResponses = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${config.backendUrl}/api/forms/${formId}/responses`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load responses');
-      }
-
-      const data = await response.json();
+      const { data, error } = await api.responses.list(formId!);
+      if (error) throw new Error('Failed to load responses');
       
-      // Sort by most recent first
-      const sortedResponses = (data.responses || []).sort((a: Response, b: Response) => 
+      const sortedResponses = (data || []).sort((a: Response, b: Response) => 
         new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
       );
       
@@ -106,19 +94,10 @@ export const FormResponsesNew: React.FC = () => {
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(
-        `${config.backendUrl}/api/forms/${formId}/responses/export/${format}`,
-        {
-          headers: getAuthHeaders(),
-          credentials: 'include'
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Export failed');
-      }
-
-      const blob = await response.blob();
+      const result = await api.responses.export(formId!, format);
+      if (!result) throw new Error('Export failed');
+      
+      const blob = new Blob([result], { type: format === 'json' ? 'application/json' : 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

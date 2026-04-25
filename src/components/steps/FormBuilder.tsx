@@ -8,7 +8,7 @@ import { InlineEditableText, EditableOptions } from '../InlineEditableText';
 import { ComponentPicker } from '../ComponentPicker';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useI18n } from '../../i18n';
-import { config, getAuthHeaders } from '../../config';
+import { api } from '../../services/api';
 import { FormChatPanel } from '../FormChatPanel';
 import { brandTokens, buildPagePresets, normalizeThemeColor, withAlpha } from '../../theme/brand';
 
@@ -58,36 +58,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const pendingFormSave = useRef<NodeJS.Timeout | null>(null);
 
   // Save question to backend (debounced)
-  const saveQuestionToBackend = useCallback(async (questionId: number, updates: any) => {
+  const saveQuestionToBackend = useCallback(async (questionId: string, updates: any) => {
     try {
-      const response = await fetch(
-        `${config.backendUrl}/api/forms/${formData.id}/questions/${questionId}`,
-        {
-          method: 'PUT',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify(updates)
-        }
-      );
-      if (!response.ok) {
-        console.error('Failed to save question:', await response.text());
+      const { error } = await api.questions.update(questionId, updates);
+      if (error) {
+        console.error('Failed to save question:', error);
       }
     } catch (err) {
       console.error('Failed to save question:', err);
     }
-  }, [formData.id]);
+  }, []);
 
   // Save form metadata to backend (debounced)
   const saveFormMetadataToBackend = useCallback(async (title: string, description: string) => {
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({ title, description })
-      });
-      if (!response.ok) {
-        console.error('Failed to save form metadata:', await response.text());
+      const { error } = await api.forms.update(formData.id, { title, description });
+      if (error) {
+        console.error('Failed to save form metadata:', error);
       }
     } catch (err) {
       console.error('Failed to save form metadata:', err);
@@ -148,14 +135,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   // Save form settings to backend
   const saveFormSettings = async (settings: any) => {
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({ settings })
-      });
-      
-      if (!response.ok) {
+      const { error } = await api.forms.update(formData.id, { settings });
+      if (error) {
         console.error('Failed to save form settings');
       }
     } catch (err) {
@@ -166,14 +147,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   // Handler when form is updated via chat
   const handleFormUpdatedFromChat = async () => {
     try {
-      const formResponse = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-      
-      if (formResponse.ok) {
-        const updatedForm = await formResponse.json();
-        setFormData(updatedForm);
+      const { data, error } = await api.forms.get(formData.id);
+      if (!error && data?.[0]) {
+        setFormData(data[0]);
       }
     } catch (err) {
       console.error('Failed to refresh form:', err);
@@ -191,13 +167,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     setIsGenerating(true);
     
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms/generate`, {
-        method: 'POST',
-        headers: getAuthHeaders({
-          'Content-Type': 'application/json'
-        }),
-        credentials: 'include',
-        body: JSON.stringify({
+      const { data, error } = await api.ai.generateForm(userQuery);
+      if (error) throw new Error(error.message || 'Failed to generate form');
+      
+      if (data) {
+        const { data: form, error: formError } = await api.forms.get(data.form_id);
+        if (!formError && form?.[0]) {
+          setFormData(form[0]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to generate form:', err);
+      alert('Failed to generate form: ' + err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
           user_query: userQuery
         })
       });

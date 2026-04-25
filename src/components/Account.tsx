@@ -1,124 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { config, getAuthHeaders, checkAuthResponse } from '../config';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { useCreditsContext } from '../contexts/CreditsContext';
-import { SubscriptionDetails } from './SubscriptionDetails';
 import { useI18n } from '../i18n';
 
-interface SubscriptionInfo {
-  tier: string;
-  status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  created_at: string | null;
-}
-
 interface UserProfile {
-  id: number;
+  id: string;
   email: string;
   name: string | null;
-  picture: string | null;
-  provider: string | null;
-  is_active: boolean;
+  avatar_url: string | null;
   created_at: string;
-  subscription: SubscriptionInfo;
-  dashboards_this_month: number;
 }
 
 interface AccountProps {
   onClose?: () => void;
 }
 
-interface SubscriptionData {
-  has_subscription: boolean;
-  status: string | null;
-  plan: {
-    id: number;
-    name: string;
-    price_monthly: number;
-    price_yearly: number | null;
-    credits_per_month: number;
-    credits_per_analyze: number;
-    credits_per_edit: number;
-  } | null;
-  credits: {
-    balance: number;
-    credits_per_month: number;
-  } | null;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  next_billing_amount: number | null;
-  billing_period: string | null;
-  cancel_at_period_end: boolean;
-  available_plans: any[];
-}
-
 export const Account: React.FC<AccountProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const notification = useNotification();
-  const { refetch: refetchCredits } = useCreditsContext();
+  const { user, updateProfile } = useAuth();
   const { t } = useI18n();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
-  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
-  const [loadingSubscription, setLoadingSubscription] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
-    fetchSubscriptionStatus();
-  }, []);
-
-  const fetchSubscriptionStatus = async () => {
-    try {
-      setLoadingSubscription(true);
-      const response = await fetch(`${config.backendUrl}/api/payment/subscription-status`, {
-        headers: getAuthHeaders(),
-      });
-
-      await checkAuthResponse(response);
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubscriptionData(data);
-
-        // Refetch credits when subscription data changes
-        refetchCredits();
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch subscription status:', err);
-    } finally {
-      setLoadingSubscription(false);
-    }
-  };
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`${config.backendUrl}/api/auth/me`, {
-        headers: getAuthHeaders(),
-      });
-
-      await checkAuthResponse(response);
-
-      if (!response.ok) {
-        throw new Error(t.failedToFetchProfile);
-      }
-
-      const data = await response.json();
-      setProfile(data);
-      setEditName(data.name || '');
-    } catch (err: any) {
-      setError(err.message || t.failedToLoadProfile);
-    } finally {
+    if (user) {
+      setEditName(user.name || '');
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!editName.trim()) {
@@ -129,23 +43,7 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
     try {
       setSaving(true);
       setError(null);
-      const response = await fetch(`${config.backendUrl}/api/auth/me`, {
-        method: 'PATCH',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: editName }),
-      });
-
-      await checkAuthResponse(response);
-
-      if (!response.ok) {
-        throw new Error(t.failedToUpdateProfile);
-      }
-
-      const data = await response.json();
-      setProfile(prev => prev ? { ...prev, name: data.user.name } : null);
+      await updateProfile({ name: editName });
       setEditing(false);
     } catch (err: any) {
       setError(err.message || t.failedToUpdateProfile);

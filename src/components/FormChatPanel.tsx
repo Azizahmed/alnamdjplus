@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { config, getAuthHeaders } from '../config';
+import { api } from '../services/api';
 import { useI18n } from '../i18n';
 import { ResponseDataTable } from './ResponseDataTable';
 import { brandTokens, normalizeThemeColor } from '../theme/brand';
@@ -135,69 +135,26 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     setStreamingData(null);
 
     try {
-      const response = await fetch(
-        `${config.backendUrl}/api/forms/${formId}/chat/stream`,
-        {
-          method: 'POST',
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ message: userMessage }),
-          credentials: 'include'
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      const { data, error } = await api.chat.send(String(formId), userMessage);
+      if (error) throw new Error(error.message || 'Chat failed');
+      
+      const assistantMessage = data?.message || 'No response';
+      setStreamingContent(assistantMessage);
+      
+      if (data?.action) {
+        onFormUpdated?.();
       }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader');
-
-      const decoder = new TextDecoder();
-      let currentContent = '';
-      let currentData: ChatMessage['data'] | null = null;
-      let currentRoute = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const text = decoder.decode(value);
-        const lines = text.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            // Skip event type lines (e.g., "event: route", "event: content")
-            continue;
-          }
-          
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              
-              if (data.route) {
-                currentRoute = data.route;
-              }
-              
-              if (data.content) {
-                currentContent += data.content;
-                setStreamingContent(currentContent);
-              }
-              
-              if (data.columns && data.rows) {
-                currentData = {
-                  columns: data.columns,
-                  rows: data.rows,
-                  row_count: data.row_count
-                };
-                setStreamingData(currentData);
-              }
-              
-              if (data.action === 'add' || data.action === 'edit') {
-                // Form was updated, notify parent
-                onFormUpdated?.();
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}` }]);
+    } finally {
+      setIsStreaming(false);
+      if (streamingContent) {
+        setMessages(prev => [...prev, { role: 'assistant', content: streamingContent, data: streamingData || undefined }]);
+        setStreamingContent('');
+        setStreamingData(null);
+      }
+    }
+  };
               }
               
               if (data.error) {
