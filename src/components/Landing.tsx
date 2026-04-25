@@ -2,21 +2,21 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FeatureCard } from './landing/FeatureCard';
 import { WorkflowStep } from './landing/WorkflowStep';
-import { GoogleAuthButton } from './GoogleAuthButton';
 import { InteractiveDemo } from './landing/InteractiveDemo';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Landing: React.FC = () => {
   const landingRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const logoSrc = '/logo.png?v=20260410';
 
   // Check if user is already logged in and redirect
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
+    if (user) {
       navigate('/build', { replace: true });
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
   useEffect(() => {
     const observerOptions = {
@@ -85,9 +85,12 @@ export const Landing: React.FC = () => {
             gap: '16px',
             flexWrap: 'wrap'
           }}>
-            <GoogleAuthButton>
+            <button
+              onClick={() => navigate('/auth')}
+              className="cta-button-primary"
+            >
               جرب منشئ النماذج بالذكاء الاصطناعي
-            </GoogleAuthButton>
+            </button>
           </div>
         </div>
       </header>
@@ -110,9 +113,12 @@ export const Landing: React.FC = () => {
               <strong>تحليل مدعوم بالذكاء الاصطناعي:</strong> استكشف أكثر من 20 نوع سؤال، تتبع التحليلات في الوقت الفعلي، واحصل على رؤى فورية بالذكاء الاصطناعي على ردودك.
               أضف منطق شرطي، قواعد تحقق، سمات مخصصة، وحلل البيانات دون تصدير.
             </p>
-            <GoogleAuthButton>
+            <button
+              onClick={() => navigate('/auth')}
+              className="cta-button-primary"
+            >
               أنشئ نموذجك الخاص
-            </GoogleAuthButton>
+            </button>
           </div>
         </div>
       </section>
@@ -610,9 +616,12 @@ export const Landing: React.FC = () => {
         <div className="cta-content">
           <h2>مستعد لبناء النماذج بالطريقة الصحيحة؟</h2>
           <p>انضم إلى منشئ النماذج الذكي بالذكاء الاصطناعي. أنشئ، عدل، وحلل - كل ذلك باللغة العربية.</p>
-          <GoogleAuthButton className="cta-button-primary">
+          <button
+            onClick={() => navigate('/auth')}
+            className="cta-button-primary"
+          >
             ابدأ البناء بالذكاء الاصطناعي - مجاناً
-          </GoogleAuthButton>
+          </button>
         </div>
       </section>
 

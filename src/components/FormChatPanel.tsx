@@ -139,49 +139,17 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
       if (error) throw new Error(error.message || 'Chat failed');
       
       const assistantMessage = data?.message || 'No response';
-      setStreamingContent(assistantMessage);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: assistantMessage,
+        data: data?.data || undefined
+      }]);
       
       if (data?.action) {
         onFormUpdated?.();
       }
     } catch (err: any) {
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}` }]);
-    } finally {
-      setIsStreaming(false);
-      if (streamingContent) {
-        setMessages(prev => [...prev, { role: 'assistant', content: streamingContent, data: streamingData || undefined }]);
-        setStreamingContent('');
-        setStreamingData(null);
-      }
-    }
-  };
-              }
-              
-              if (data.error) {
-                currentContent = `Error: ${data.error}`;
-                setStreamingContent(currentContent);
-              }
-            } catch (e) {
-              // Ignore parse errors
-            }
-          }
-        }
-      }
-
-      // Add complete message
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: currentContent || t.done,
-        data: currentData || undefined,
-        route: currentRoute
-      }]);
-      
-    } catch (error: any) {
-      console.error('Chat error:', error);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `${t.somethingWentWrong}: ${error.message}. ${t.pleaseTryAgain}`
-      }]);
     } finally {
       setIsStreaming(false);
       setStreamingContent('');

@@ -59,7 +59,7 @@ export const PublicForm: React.FC = () => {
       const { data, error } = await api.publicForms.get(token!);
       if (error) throw new Error('Form not found or no longer accepting responses');
       
-      const form = data?.[0]?.forms;
+      const form = (data as any)?.forms;
       if (!form) throw new Error('Form not found');
       
       setFormData(form);
@@ -185,7 +185,7 @@ export const PublicForm: React.FC = () => {
       }
       
       // Track question answered
-      trackEvent('question_answered', questionId);
+      trackEvent('question_answered', String(questionId));
       
       // Schedule autosave with the new state
       scheduleAutosave(updatedAnswers);

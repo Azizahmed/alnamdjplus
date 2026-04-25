@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../contexts/NotificationContext';
 import { useSidebar } from '../contexts/SidebarContext';
 import { useI18n } from '../i18n';
 
@@ -13,7 +12,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onAccountClick }) => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const notification = useNotification();
   const { toggleSidebar } = useSidebar();
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);

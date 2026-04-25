@@ -30,18 +30,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkUser = async () => {
     try {
-      const { data, error } = await insforge.auth.getCurrentUser();
+      const { data } = await insforge.auth.getCurrentUser();
       if (data?.user) {
         setUser({
           id: data.user.id,
           email: data.user.email || '',
-          name: data.user.user_metadata?.name,
-          avatar_url: data.user.user_metadata?.avatar_url,
+          name: data.user.profile?.name,
+          avatar_url: data.user.profile?.avatar_url,
         });
       } else {
         setUser(null);
       }
-    } catch (err) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -49,19 +49,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await insforge.auth.signIn(email, password);
+    const { error } = await insforge.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     await checkUser();
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await insforge.auth.signUp(email, password, { name });
+    const { error } = await insforge.auth.signUp({ email, password, name });
     if (error) throw new Error(error.message);
     await checkUser();
   };
 
   const signInWithGoogle = async () => {
-    const { data, error } = await insforge.auth.signInWithOAuth('google');
+    const { data, error } = await insforge.auth.signInWithOAuth({ provider: 'google' });
     if (error) throw new Error(error.message);
     if (data?.url) {
       window.location.href = data.url;
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateProfile = async (data: { name?: string; avatar_url?: string }) => {
-    const { error } = await insforge.auth.updateUser({ data });
+    const { error } = await insforge.auth.setProfile(data);
     if (error) throw new Error(error.message);
     await checkUser();
   };

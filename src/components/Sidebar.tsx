@@ -43,12 +43,12 @@ export const Sidebar: React.FC = () => {
       setRefreshing(true);
     }
     try {
-      const { data, error } = await api.forms.list(user!.id);
+      const { data } = await api.forms.list(user!.id);
       if (data) {
         setForms(data);
       }
-    } catch (error) {
-      console.error('Failed to load forms:', error);
+    } catch (err) {
+      console.error('Failed to load forms:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -61,7 +61,6 @@ export const Sidebar: React.FC = () => {
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
   const isFormActive = (formId: string) => {
     return location.pathname.includes(`/forms/${formId}`);
   };

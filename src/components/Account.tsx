@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useI18n } from '../i18n';
-
-interface UserProfile {
-  id: string;
-  email: string;
-  name: string | null;
-  avatar_url: string | null;
-  created_at: string;
-}
 
 interface AccountProps {
   onClose?: () => void;
 }
 
 export const Account: React.FC<AccountProps> = ({ onClose }) => {
-  const navigate = useNavigate();
   const notification = useNotification();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, signOut } = useAuth();
   const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,88 +48,11 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
       message: t.deactivateConfirm,
       onConfirm: async () => {
         try {
-          const response = await fetch(`${config.backendUrl}/api/auth/me`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-          });
-
-          await checkAuthResponse(response);
-
-          if (!response.ok) {
-            throw new Error(t.deactivateAccount);
-          }
-
-          // Clear token and redirect
-          localStorage.removeItem('auth_token');
+          await signOut();
           window.location.href = '/';
         } catch (err: any) {
           setError(err.message || t.deactivateAccount);
           notification.error(err.message || t.deactivateAccount);
-        }
-      }
-    });
-  };
-
-
-  const handleCancelSubscription = async () => {
-    if (!subscriptionData) return;
-
-    notification.showConfirm({
-      title: t.cancelSubscription,
-      message: t.cancelConfirm,
-      onConfirm: async () => {
-        try {
-          setLoadingSubscription(true);
-          const response = await fetch(`${config.backendUrl}/api/payment/cancel-subscription`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-          });
-
-          await checkAuthResponse(response);
-
-          if (response.ok) {
-            notification.success(t.subscriptionCancelScheduled);
-            await fetchSubscriptionStatus();
-            await fetchProfile();
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || t.cancelSubscription);
-          }
-        } catch (err: any) {
-          notification.error(err.message || t.cancelSubscription);
-        } finally {
-          setLoadingSubscription(false);
-        }
-      }
-    });
-  };
-
-  const handleReactivateSubscription = async () => {
-    notification.showConfirm({
-      title: t.reactivateSubscription,
-      message: t.reactivateConfirm,
-      onConfirm: async () => {
-        try {
-          setLoadingSubscription(true);
-          const response = await fetch(`${config.backendUrl}/api/payment/reactivate-subscription`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-          });
-
-          await checkAuthResponse(response);
-
-          if (response.ok) {
-            notification.success(t.subscriptionReactivated);
-            await fetchSubscriptionStatus();
-            await fetchProfile();
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || t.reactivateSubscription);
-          }
-        } catch (err: any) {
-          notification.error(err.message || t.reactivateSubscription);
-        } finally {
-          setLoadingSubscription(false);
         }
       }
     });
@@ -150,19 +63,6 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
       <div className="account-container">
         <div className="account-card">
           <div className="loading">{t.loadingProfile}</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !profile) {
-    return (
-      <div className="account-container">
-        <div className="account-card">
-          <div className="error-message">{error}</div>
-          <button onClick={fetchProfile} className="cta-button-secondary">
-            {t.retry}
-          </button>
         </div>
       </div>
     );
@@ -186,24 +86,13 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
           </div>
         )}
 
-        {profile && (
+        {user && (
           <div className="account-content">
-            {/* Profile Picture */}
-            <div className="profile-section">
-              {profile.picture && (
-                <img
-                  src={profile.picture}
-                  alt={profile.name || t.notSet}
-                  className="profile-picture"
-                />
-              )}
-            </div>
-
             {/* Profile Info */}
             <div className="info-section">
               <div className="info-group">
                 <label>{t.email}</label>
-                <div className="info-value">{profile.email}</div>
+                <div className="info-value">{user.email}</div>
               </div>
 
               <div className="info-group">
@@ -229,7 +118,7 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
                       <button
                         onClick={() => {
                           setEditing(false);
-                          setEditName(profile.name || '');
+                          setEditName(user.name || '');
                           setError(null);
                         }}
                         disabled={saving}
@@ -242,7 +131,7 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
                   </div>
                 ) : (
                   <div className="info-value-with-action">
-                    <span>{profile.name || t.notSet}</span>
+                    <span>{user.name || t.notSet}</span>
                     <button
                       onClick={() => setEditing(true)}
                       className="edit-button"
@@ -252,83 +141,6 @@ export const Account: React.FC<AccountProps> = ({ onClose }) => {
                   </div>
                 )}
               </div>
-
-              <div className="info-group">
-                <label>{t.memberSince}</label>
-                <div className="info-value">
-                  {new Date(profile.created_at).toLocaleDateString('ar', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </div>
-              </div>
-
-              <div className="info-group">
-                <label>{t.dashboardsThisMonth}</label>
-                <div className="info-value">
-                  {profile.dashboards_this_month || 0}
-                </div>
-              </div>
-
-              <div className="info-group">
-                <label>{t.accountStatus}</label>
-                <div className="info-value">
-                  <span className={`status-badge ${profile.is_active ? 'active' : 'inactive'}`}>
-                    {profile.is_active ? t.active : t.inactive}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Subscription Section */}
-            <div className="subscription-section">
-              <h2>{t.subscriptionPlan}</h2>
-
-              {loadingSubscription ? (
-                <div className="loading">{t.loadingSubscription}</div>
-              ) : subscriptionData ? (
-                <>
-                  <div className="subscription-card">
-                    <SubscriptionDetails subscription={subscriptionData} />
-
-                    <div className="subscription-actions">
-                      {subscriptionData.plan && subscriptionData.plan.name !== 'Free' && (
-                        <>
-                          {subscriptionData.cancel_at_period_end ? (
-                            <button
-                              onClick={handleReactivateSubscription}
-                              className="cta-button-primary"
-                              disabled={loadingSubscription}
-                            >
-                              {t.reactivateSubscription}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={handleCancelSubscription}
-                              className="cta-button-secondary danger"
-                              disabled={loadingSubscription}
-                            >
-                              {t.cancelSubscription}
-                            </button>
-                          )}
-                        </>
-                      )}
-
-                      {subscriptionData.plan && subscriptionData.plan.name === 'Free' && (
-                        <button
-                          onClick={() => navigate('/pricing')}
-                          className="cta-button-primary"
-                        >
-                          {t.upgradePlan}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="error-message">{t.failedToLoadSubscription}</div>
-              )}
             </div>
 
             {/* Danger Zone */}

@@ -54,7 +54,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const resolvedBoldText = normalizeThemeColor(globalColors.boldText || globalColors.accent, 'bold', brandTokens.primary);
 
   // Refs for debounced saves
-  const pendingQuestionSaves = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const pendingQuestionSaves = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const pendingFormSave = useRef<NodeJS.Timeout | null>(null);
 
   // Save question to backend (debounced)
@@ -183,71 +183,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       setIsGenerating(false);
     }
   };
-          user_query: userQuery
-        })
-      });
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      const isJson = contentType && contentType.includes('application/json');
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to generate form';
-        if (isJson) {
-          try {
-        const errorData = await response.json();
-            errorMessage = errorData.detail || errorMessage;
-          } catch (e) {
-            // If JSON parsing fails, use status text
-            errorMessage = `Error ${response.status}: ${response.statusText}`;
-          }
-        } else {
-          // If not JSON, it's probably an HTML error page
-          errorMessage = `Server error (${response.status}). Please check if the backend is running correctly.`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      if (!isJson) {
-        throw new Error('Server returned non-JSON response. Please check backend configuration.');
-      }
-
-      const data = await response.json();
-      setFormData(data.form);
-    } catch (err: any) {
-      console.error('Form generation error:', err);
-      // Form generation failed - user can see the error in the console
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleSaveQuestion = async (updates: any) => {
     if (!selectedQuestion) return;
 
     try {
-      // Save to backend
-      const response = await fetch(
-        `${config.backendUrl}/api/forms/${formData.id}/questions/${selectedQuestion.id}`,
-        {
-          method: 'PUT',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify(updates)
-        }
+      const { error } = await api.questions.update(selectedQuestion.id, updates);
+      if (error) throw new Error('Failed to save question');
+
+      const updatedQuestions = formData.questions.map((q: any) =>
+        q.id === selectedQuestion.id ? { ...q, ...updates } : q
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to save question');
-      }
-
-      // Update local state
-    const updatedQuestions = formData.questions.map((q: any) =>
-      q.id === selectedQuestion.id ? { ...q, ...updates } : q
-    );
-
-    setFormData({ ...formData, questions: updatedQuestions });
-    setSelectedQuestion({ ...selectedQuestion, ...updates });
+      setFormData({ ...formData, questions: updatedQuestions });
+      setSelectedQuestion({ ...selectedQuestion, ...updates });
     } catch (err) {
       console.error('Failed to save question:', err);
       alert('Failed to save question. Please try again.');
@@ -256,32 +205,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   const handleRegenerateQuestion = async (question: any, prompt: string) => {
     try {
-      const response = await fetch(
-        `${config.backendUrl}/api/forms/${formData.id}/questions/${question.id}/regenerate`,
-        {
-          method: 'POST',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ 
-            context: prompt || 'Regenerate this question',
-            prompt: prompt
-          })
-        }
-      );
+      const { error } = await api.chat.send(formData.id, `Regenerate question "${question.label}" with: ${prompt || 'Improve this question'}`);
+      if (error) throw new Error(error.message || 'Failed to regenerate question');
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to regenerate question');
-      }
-
-      const data = await response.json();
-      
-      // Update the question in the form
-      if (data.question) {
-        const updatedQuestions = formData.questions.map((q: any) =>
-          q.id === question.id ? { ...q, ...data.question } : q
-        );
-        setFormData({ ...formData, questions: updatedQuestions });
+      const { data: form } = await api.forms.get(formData.id);
+      if (form?.[0]) {
+        setFormData(form[0]);
       }
     } catch (err: any) {
       console.error('Question regeneration error:', err);
@@ -289,26 +218,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     }
   };
 
-  const handleDeleteQuestion = async (questionId: number) => {
+  const handleDeleteQuestion = async (questionId: string) => {
     if (confirm('Are you sure you want to delete this question?')) {
       try {
-        // Delete from backend first
-        const response = await fetch(
-          `${config.backendUrl}/api/forms/${formData.id}/questions/${questionId}`,
-          {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-            credentials: 'include'
-          }
-        );
+        const { error } = await api.questions.delete(questionId);
+        if (error) throw new Error('Failed to delete question');
 
-        if (!response.ok) {
-          throw new Error('Failed to delete question');
-        }
-
-        // Update local state only after successful backend delete
-      const updatedQuestions = formData.questions.filter((q: any) => q.id !== questionId);
-      setFormData({ ...formData, questions: updatedQuestions });
+        const updatedQuestions = formData.questions.filter((q: any) => q.id !== questionId);
+        setFormData({ ...formData, questions: updatedQuestions });
       } catch (err) {
         console.error('Failed to delete question:', err);
         alert('Failed to delete question. Please try again.');
@@ -317,7 +234,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   };
 
   // Handle inline editing of question text, description, or options
-  const handleInlineQuestionUpdate = (questionId: number, field: string, value: any) => {
+  const handleInlineQuestionUpdate = (questionId: string, field: string, value: any) => {
     // Find the current question to build the complete update
     const question = formData.questions.find((q: any) => q.id === questionId);
     if (!question) return;
@@ -417,24 +334,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       const aiMessage = `Add a ${questionType.replace(/_/g, ' ')} question: ${customization.aiPrompt}`;
       
       try {
-        const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}/chat`, {
-          method: 'POST',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ message: aiMessage })
-        });
-        
-        if (!response.ok) throw new Error('Failed to generate component');
+        const { error } = await api.chat.send(formData.id, aiMessage);
+        if (error) throw new Error('Failed to generate component');
         
         // Refresh form data
-        const formResponse = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-          headers: getAuthHeaders(),
-          credentials: 'include'
-        });
-        
-        if (formResponse.ok) {
-          const updatedForm = await formResponse.json();
-          setFormData(updatedForm);
+        const { data: form } = await api.forms.get(formData.id);
+        if (form?.[0]) {
+          setFormData(form[0]);
         }
       } catch (err) {
         console.error('AI generate error:', err);
@@ -481,38 +387,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         settings = { max_value: 5 };
       }
 
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}/questions`, {
-        method: 'POST',
-        headers: getAuthHeaders({
-          'Content-Type': 'application/json'
-        }),
-        credentials: 'include',
-        body: JSON.stringify({
-          form_id: formData.id,
-          question_order: questionOrder,
-          question_type: questionType,
-          question_text: questionText,
-          description: description,
-          required: false,
-          settings: settings
-        })
+      const { error: addError } = await api.questions.create({
+        form_id: formData.id,
+        type: questionType,
+        label: questionText,
+        description: description,
+        required: false,
+        order: questionOrder,
+        settings: settings
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to add question');
-      }
-
-      await response.json();
+      if (addError) throw new Error('Failed to add question');
       
       // Refresh form data
-      const formResponse = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
-
-      if (formResponse.ok) {
-        const updatedForm = await formResponse.json();
-        setFormData(updatedForm);
+      const { data: form } = await api.forms.get(formData.id);
+      if (form?.[0]) {
+        setFormData(form[0]);
       }
       
       // Reset insert index
@@ -525,28 +415,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   const handlePublish = async () => {
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}/publish`, {
-        method: 'POST',
-        headers: getAuthHeaders({
-          'Content-Type': 'application/json'
-        }),
-        credentials: 'include',
-        body: JSON.stringify({
-          form_id: formData.id,
-          allow_multiple_submissions: true,
-          collect_email: false
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Use the same /forms/{token} URL for both preview and sharing
-        const link = `${window.location.origin}/forms/${data.share_token}`;
+      const token = crypto.randomUUID().replace(/-/g, '');
+      const { error } = await api.forms.publish(formData.id, token);
+      
+      if (!error) {
+        const link = `${window.location.origin}/forms/${token}`;
         setPublishLink(link);
         setShowPublishPopup(true);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Publish failed:', errorData);
+        console.error('Publish failed:', error);
         alert('Failed to create publish link. Please try again.');
       }
     } catch (error) {
@@ -557,24 +434,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   const handlePreview = async () => {
     try {
-      // First create/get publish link
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}/publish`, {
-        method: 'POST',
-        headers: getAuthHeaders({
-          'Content-Type': 'application/json'
-        }),
-        credentials: 'include',
-        body: JSON.stringify({
-          form_id: formData.id,
-          allow_multiple_submissions: true,
-          collect_email: false
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Add review=true to show form in grayscale mode
-        const previewUrl = `${window.location.origin}/forms/${data.share_token}?review=true`;
+      const token = crypto.randomUUID().replace(/-/g, '');
+      const { error } = await api.forms.publish(formData.id, token);
+      
+      if (!error) {
+        const previewUrl = `${window.location.origin}/forms/${token}?review=true`;
         window.open(previewUrl, '_blank');
       } else {
         alert('Failed to generate preview. Please try again.');
@@ -593,23 +457,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     }
 
     try {
-      const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        credentials: 'include'
-      });
+      const { error } = await api.forms.delete(formData.id);
 
-      if (response.ok) {
+      if (!error) {
         alert('Form deleted successfully.');
-        // Navigate back or to dashboard
         if (onBack) {
           onBack();
       } else {
           window.location.href = '/build';
         }
       } else {
-        const error = await response.json().catch(() => ({}));
-        alert(error.detail || 'Failed to delete form. Please try again.');
+        alert('Failed to delete form. Please try again.');
       }
     } catch (error) {
       console.error('Failed to delete form:', error);
@@ -2411,24 +2269,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           setIsGenerating(true);
           
           try {
-            const response = await fetch(`${config.backendUrl}/api/forms/${formData.id}/chat`, {
-              method: 'POST',
-              headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-              credentials: 'include',
-              body: JSON.stringify({ message: prompt })
-            });
-            
-            if (!response.ok) throw new Error('Failed to generate component');
+            const { error } = await api.chat.send(formData.id, prompt);
+            if (error) throw new Error('Failed to generate component');
             
             // Refresh form data
-            const formResponse = await fetch(`${config.backendUrl}/api/forms/${formData.id}`, {
-              headers: getAuthHeaders(),
-              credentials: 'include'
-            });
-            
-            if (formResponse.ok) {
-              const updatedForm = await formResponse.json();
-              setFormData(updatedForm);
+            const { data: form } = await api.forms.get(formData.id);
+            if (form?.[0]) {
+              setFormData(form[0]);
             }
           } catch (err) {
             console.error('Generate error:', err);

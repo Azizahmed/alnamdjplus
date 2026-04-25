@@ -24,10 +24,13 @@ export const ar = {
   // Navigation
   create: 'إنشاء',
   allForms: 'كل النماذج',
+  myForms: 'نماذجي',
   newForm: 'نموذج جديد',
   recentForms: 'النماذج الأخيرة',
   refreshForms: 'تحديث النماذج',
+  noForms: 'لا توجد نماذج',
   noFormsYet: 'لا توجد نماذج بعد',
+  createFirstForm: 'أنشئ نموذجك الأول',
   createNewForm: 'أنشئ نموذجاً جديداً أو قم بتحديث لرؤية أحدث نماذجك',
   questions: 'أسئلة',
   viewResponses: 'عرض الردود',

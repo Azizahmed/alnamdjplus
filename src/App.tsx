@@ -32,12 +32,13 @@ function FormBuilderPage() {
     setLoading(true);
     try {
       const { insforge } = await import('./config');
-      const { data } = await insforge.database.query('forms', {
-        filter: { id: formId },
-        select: '*, form_questions(*), conditional_rules(*)'
-      });
-      if (data?.[0]) {
-        setFormData(data[0]);
+      const { data } = await insforge.database
+        .from('forms')
+        .select('*, form_questions(*), conditional_rules(*)')
+        .eq('id', formId)
+        .single();
+      if (data) {
+        setFormData(data);
         setCurrentStep(1);
       }
     } catch (error) {

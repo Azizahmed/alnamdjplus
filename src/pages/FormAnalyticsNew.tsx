@@ -32,8 +32,8 @@ interface FunnelData {
 
 interface SummaryData {
   total_responses: number;
-  complete_responses: number;
-  partial_responses: number;
+  completed_responses: number;
+  partial_responses?: number;
   avg_completion_time_seconds?: number;
   recent_activity?: {
     last_7_days: number;
@@ -89,13 +89,33 @@ export const FormAnalyticsNew: React.FC = () => {
     try {
       setLoading(true);
       
-      const dateParams = getDateParams();
-      
-      const [summaryResult] = await Promise.all([
+      const [summaryResult, tsResult] = await Promise.all([
         api.analytics.getSummary(formId!),
+        api.analytics.getTimeseries(formId!),
       ]);
 
-      setSummary(summaryResult);
+      setSummary(summaryResult as SummaryData);
+      setFunnel({
+        total_views: (summaryResult as SummaryData).total_responses,
+        total_starts: (summaryResult as SummaryData).total_responses,
+        total_completes: (summaryResult as SummaryData).completed_responses,
+        completion_rate: (summaryResult as SummaryData).total_responses > 0 
+          ? ((summaryResult as SummaryData).completed_responses / (summaryResult as SummaryData).total_responses) * 100 : 0,
+        question_funnel: [],
+        traffic_sources: {},
+        geographic_distribution: {}
+      });
+      if (tsResult.data) {
+        setTimeSeries({
+          time_series: tsResult.data.map((r: any) => ({
+            date: r.submitted_at?.split('T')[0] || '',
+            views: 0,
+            submissions: r.status === 'completed' ? 1 : 0
+          })),
+          total_views: 0,
+          total_submissions: tsResult.data.filter((r: any) => r.status === 'completed').length
+        });
+      }
       setLoading(false);
     } catch (err: any) {
       setError(err.message);
@@ -103,54 +123,7 @@ export const FormAnalyticsNew: React.FC = () => {
     }
   };
 
-  const getDateParams = (): Record<string, string> => {
-    if (filters.dateRange === 'custom' && filters.customStartDate && filters.customEndDate) {
-      return {
-        start_date: new Date(filters.customStartDate).toISOString(),
-        end_date: new Date(filters.customEndDate).toISOString()
-      };
-    }
-
-    const end = new Date();
-    let start = new Date();
-    
-    switch (filters.dateRange) {
-      case '7d':
-        start.setDate(start.getDate() - 7);
-        break;
-      case '30d':
-        start.setDate(start.getDate() - 30);
-        break;
-      case '90d':
-        start.setDate(start.getDate() - 90);
-        break;
-      case 'all':
-        return {};
-    }
-
-    return {
-      start_date: start.toISOString(),
-      end_date: end.toISOString()
-    };
-  };
-
-  const getFilterParams = () => {
-    const params: Record<string, string> = {};
-    
-    if (filters.questionIds && filters.questionIds.length > 0) {
-      params.question_ids = filters.questionIds.join(',');
-    }
-    if (filters.countries && filters.countries.length > 0) {
-      params.countries = filters.countries.join(',');
-    }
-    if (filters.utmSource) {
-      params.utm_source = filters.utmSource;
-    }
-    
-    return params;
-  };
-
-  if (loading && !timeSeries) {
+  if (loading && !summary) {
     return (
       <div style={{
         height: '100vh',
