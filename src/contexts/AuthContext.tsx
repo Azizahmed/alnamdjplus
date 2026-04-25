@@ -51,9 +51,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await insforge.auth.signInWithPassword({ email, password });
+    const { data, error } = await insforge.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    await checkUser();
+    if (data?.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || '',
+        name: data.user.profile?.name,
+        avatar_url: data.user.profile?.avatar_url,
+      });
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -69,8 +76,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const verifyEmail = async (email: string, otp: string) => {
     const { data, error } = await insforge.auth.verifyEmail({ email, otp });
     if (error) throw new Error(error.message);
-    if (data?.accessToken) {
-      await checkUser();
+    if (data?.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || '',
+        name: data.user.profile?.name,
+        avatar_url: data.user.profile?.avatar_url,
+      });
     }
   };
 

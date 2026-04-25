@@ -16,10 +16,11 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing authorization header');
     }
 
+    const userToken = authHeader.replace('Bearer ', '');
+
     const insforge = createClient({
-      baseUrl: Deno.env.get('INSGORGE_URL') ?? '',
-      anonKey: Deno.env.get('INSGORGE_ANON_KEY') ?? '',
-      global: { headers: { Authorization: authHeader } },
+      baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+      edgeFunctionToken: userToken,
     });
 
     const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
@@ -100,12 +101,15 @@ Language: ${language}`;
       throw new Error('Failed to parse AI response');
     }
 
-    const { data: form, error: formError } = await insforge.database.insert('forms', [{
-      user_id: userData.user.id,
-      title: formData.title,
-      description: formData.description,
-      settings: {},
-    }]);
+    const { data: form, error: formError } = await insforge.database
+      .from('forms')
+      .insert({
+        user_id: userData.user.id,
+        title: formData.title,
+        description: formData.description,
+        settings: {},
+      })
+      .select();
 
     if (formError) {
       throw new Error(formError.message);
@@ -124,7 +128,10 @@ Language: ${language}`;
         settings: q.settings || {},
       }));
 
-      const { data: insertedQuestions, error: questionsError } = await insforge.database.insert('form_questions', questions);
+      const { data: insertedQuestions, error: questionsError } = await insforge.database
+        .from('form_questions')
+        .insert(questions)
+        .select();
 
       if (questionsError) {
         throw new Error(questionsError.message);
@@ -138,7 +145,9 @@ Language: ${language}`;
           action: rule.action,
         }));
 
-        const { error: rulesError } = await insforge.database.insert('conditional_rules', rules);
+        const { error: rulesError } = await insforge.database
+          .from('conditional_rules')
+          .insert(rules);
 
         if (rulesError) {
           console.error('Failed to insert conditional rules:', rulesError);
@@ -147,11 +156,9 @@ Language: ${language}`;
     }
 
     const token = crypto.randomUUID().replace(/-/g, '');
-    const { error: publicError } = await insforge.database.insert('public_forms', [{
-      form_id: formId,
-      token: token,
-      settings: {},
-    }]);
+    const { error: publicError } = await insforge.database
+      .from('public_forms')
+      .insert({ form_id: formId, token, settings: {} });
 
     if (publicError) {
       console.error('Failed to create public form:', publicError);

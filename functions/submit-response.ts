@@ -12,8 +12,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const insforge = createClient({
-      baseUrl: Deno.env.get('INSGORGE_URL') ?? '',
-      anonKey: Deno.env.get('INSGORGE_ANON_KEY') ?? '',
+      baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+      anonKey: Deno.env.get('ANON_KEY') ?? '',
     });
 
     const { token, answers, metadata = {} } = await req.json();
@@ -22,10 +22,10 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing token or answers');
     }
 
-    const { data: publicForm, error: publicFormError } = await insforge.database.query('public_forms', {
-      filter: { token },
-      select: 'form_id',
-    });
+    const { data: publicForm, error: publicFormError } = await insforge.database
+      .from('public_forms')
+      .select('form_id')
+      .eq('token', token);
 
     if (publicFormError || !publicForm?.length) {
       throw new Error('Invalid form token');
@@ -33,10 +33,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     const formId = publicForm[0].form_id;
 
-    const { data: form, error: formError } = await insforge.database.query('forms', {
-      filter: { id: formId },
-      select: 'id, form_questions(id, type, label, required, settings)',
-    });
+    const { data: form, error: formError } = await insforge.database
+      .from('forms')
+      .select('id, form_questions(id, type, label, required, settings)')
+      .eq('id', formId);
 
     if (formError || !form?.length) {
       throw new Error('Form not found');
@@ -56,14 +56,17 @@ export default async function handler(req: Request): Promise<Response> {
 
     const ipHash = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
 
-    const { data: response, error: responseError } = await insforge.database.insert('form_responses', [{
-      form_id: formId,
-      status: 'completed',
-      ip_hash: ipHash,
-      geo: metadata.geo || {},
-      utm: metadata.utm || {},
-      metadata: metadata,
-    }]);
+    const { data: response, error: responseError } = await insforge.database
+      .from('form_responses')
+      .insert({
+        form_id: formId,
+        status: 'completed',
+        ip_hash: ipHash,
+        geo: metadata.geo || {},
+        utm: metadata.utm || {},
+        metadata: metadata,
+      })
+      .select();
 
     if (responseError) {
       throw new Error(responseError.message);
@@ -78,16 +81,20 @@ export default async function handler(req: Request): Promise<Response> {
         value: a.value,
       }));
 
-      const { error: answersError } = await insforge.database.insert('response_answers', answerRecords);
+      const { error: answersError } = await insforge.database
+        .from('response_answers')
+        .insert(answerRecords);
 
       if (answersError) {
         throw new Error(answersError.message);
       }
     }
 
-    const { data: webhooks } = await insforge.database.query('webhook_configs', {
-      filter: { form_id: formId, active: true },
-    });
+    const { data: webhooks } = await insforge.database
+      .from('webhook_configs')
+      .select()
+      .eq('form_id', formId)
+      .eq('active', true);
 
     if (webhooks?.length) {
       for (const webhook of webhooks) {
@@ -122,11 +129,9 @@ export default async function handler(req: Request): Promise<Response> {
       }
     }
 
-    await insforge.database.insert('form_analytics_events', [{
-      form_id: formId,
-      event_type: 'complete',
-      metadata: { response_id: responseId },
-    }]);
+    await insforge.database
+      .from('form_analytics_events')
+      .insert({ form_id: formId, event_type: 'complete', metadata: { response_id: responseId } });
 
     return new Response(
       JSON.stringify({

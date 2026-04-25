@@ -16,10 +16,11 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing authorization header');
     }
 
+    const userToken = authHeader.replace('Bearer ', '');
+
     const insforge = createClient({
-      baseUrl: Deno.env.get('INSGORGE_URL') ?? '',
-      anonKey: Deno.env.get('INSGORGE_ANON_KEY') ?? '',
-      global: { headers: { Authorization: authHeader } },
+      baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+      edgeFunctionToken: userToken,
     });
 
     const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
@@ -33,10 +34,11 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing formId or message');
     }
 
-    const { data: form, error: formError } = await insforge.database.query('forms', {
-      filter: { id: formId, user_id: userData.user.id },
-      select: 'id, title, description, form_questions(id, type, label, description, required, order, settings), conditional_rules(id, question_id, target_question_id, condition, action)',
-    });
+    const { data: form, error: formError } = await insforge.database
+      .from('forms')
+      .select('id, title, description, form_questions(id, type, label, description, required, order, settings), conditional_rules(id, question_id, target_question_id, condition, action)')
+      .eq('id', formId)
+      .eq('user_id', userData.user.id);
 
     if (formError || !form?.length) {
       throw new Error('Form not found or access denied');
@@ -92,12 +94,9 @@ When the user asks to add or modify questions, respond with a JSON action block:
 
 Always respond in the same language as the user's message. If the user writes in Arabic, respond in Arabic.`;
 
-    await insforge.database.insert('chat_messages', [{
-      form_id: formId,
-      user_id: userData.user.id,
-      role: 'user',
-      content: message,
-    }]);
+    await insforge.database
+      .from('chat_messages')
+      .insert({ form_id: formId, user_id: userData.user.id, role: 'user', content: message });
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -121,12 +120,9 @@ Always respond in the same language as the user's message. If the user writes in
       throw new Error('No response from AI');
     }
 
-    await insforge.database.insert('chat_messages', [{
-      form_id: formId,
-      user_id: userData.user.id,
-      role: 'assistant',
-      content: assistantMessage,
-    }]);
+    await insforge.database
+      .from('chat_messages')
+      .insert({ form_id: formId, user_id: userData.user.id, role: 'assistant', content: assistantMessage });
 
     let action = null;
     try {
@@ -144,30 +140,35 @@ Always respond in the same language as the user's message. If the user writes in
       switch (action.action) {
         case 'add_question': {
           const maxOrder = Math.max(...(formData.form_questions?.map((q: any) => q.order) || [-1]));
-          await insforge.database.insert('form_questions', [{
-            form_id: formId,
-            type: action.data.type,
-            label: action.data.label,
-            description: action.data.description || null,
-            required: action.data.required || false,
-            order: maxOrder + 1,
-            settings: action.data.settings || {},
-          }]);
+          await insforge.database
+            .from('form_questions')
+            .insert({
+              form_id: formId,
+              type: action.data.type,
+              label: action.data.label,
+              description: action.data.description || null,
+              required: action.data.required || false,
+              order: maxOrder + 1,
+              settings: action.data.settings || {},
+            });
           break;
         }
         case 'edit_question': {
-          await insforge.database.update('form_questions', action.data.updates, {
-            filter: { id: action.data.question_id },
-          });
+          await insforge.database
+            .from('form_questions')
+            .update(action.data.updates)
+            .eq('id', action.data.question_id);
           break;
         }
         case 'add_rule': {
-          await insforge.database.insert('conditional_rules', [{
-            question_id: action.data.source_question_id,
-            target_question_id: action.data.target_question_id,
-            condition: action.data.condition,
-            action: action.data.action,
-          }]);
+          await insforge.database
+            .from('conditional_rules')
+            .insert({
+              question_id: action.data.source_question_id,
+              target_question_id: action.data.target_question_id,
+              condition: action.data.condition,
+              action: action.data.action,
+            });
           break;
         }
       }

@@ -16,10 +16,11 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing authorization header');
     }
 
+    const userToken = authHeader.replace('Bearer ', '');
+
     const insforge = createClient({
-      baseUrl: Deno.env.get('INSGORGE_URL') ?? '',
-      anonKey: Deno.env.get('INSGORGE_ANON_KEY') ?? '',
-      global: { headers: { Authorization: authHeader } },
+      baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+      edgeFunctionToken: userToken,
     });
 
     const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
@@ -33,10 +34,11 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('Missing formId');
     }
 
-    const { data: form, error: formError } = await insforge.database.query('forms', {
-      filter: { id: formId, user_id: userData.user.id },
-      select: 'id, title, description, form_questions(id, type, label, order, settings)',
-    });
+    const { data: form, error: formError } = await insforge.database
+      .from('forms')
+      .select('id, title, description, form_questions(id, type, label, order, settings)')
+      .eq('id', formId)
+      .eq('user_id', userData.user.id);
 
     if (formError || !form?.length) {
       throw new Error('Form not found or access denied');
@@ -44,10 +46,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     const formData = form[0];
 
-    const { data: responses, error: responsesError } = await insforge.database.query('form_responses', {
-      filter: { form_id: formId },
-      select: 'id, submitted_at, status, response_answers(question_id, value)',
-    });
+    const { data: responses, error: responsesError } = await insforge.database
+      .from('form_responses')
+      .select('id, submitted_at, status, response_answers(question_id, value)')
+      .eq('form_id', formId);
 
     if (responsesError) {
       throw new Error(responsesError.message);
