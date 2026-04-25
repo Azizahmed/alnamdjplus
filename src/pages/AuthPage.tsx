@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-type AuthMode = 'login' | 'register';
+type AuthMode = 'login' | 'register' | 'verify-otp';
 
 interface AuthFormData {
   email: string;
@@ -11,9 +11,30 @@ interface AuthFormData {
   confirmPassword: string;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '12px 16px',
+  border: '1px solid #e8e4e0',
+  borderRadius: '10px',
+  fontSize: '15px',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+  fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
+  boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '14px',
+  fontWeight: '600',
+  color: '#4A4540',
+  marginBottom: '8px',
+  fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
+};
+
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, verifyEmail, resendVerificationEmail, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [formData, setFormData] = useState<AuthFormData>({
     email: '',
@@ -21,13 +42,53 @@ export const AuthPage: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpEmail, setOtpEmail] = useState('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+    setError('');
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) {
+      newOtp[i] = pasted[i] || '';
+    }
+    setOtp(newOtp);
+    const nextEmpty = newOtp.findIndex(v => !v);
+    otpRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,15 +119,54 @@ export const AuthPage: React.FC = () => {
 
     try {
       if (mode === 'register') {
-        await signUp(formData.email, formData.password, formData.name);
+        const result = await signUp(formData.email, formData.password, formData.name);
+        if (result.requireEmailVerification) {
+          setOtpEmail(formData.email);
+          setOtp(['', '', '', '', '', '']);
+          setMode('verify-otp');
+          setResendCooldown(60);
+          setLoading(false);
+          return;
+        }
+        navigate('/build', { replace: true });
       } else {
         await signIn(formData.email, formData.password);
+        navigate('/build', { replace: true });
       }
-      navigate('/build', { replace: true });
     } catch (err: any) {
       setError(err.message || 'حدث خطأ. يرجى المحاولة مرة أخرى');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('يرجى إدخال رمز التحقق المكون من 6 أرقام');
+      return;
+    }
+    setLoading(true);
+    try {
+      await verifyEmail(otpEmail, code);
+      navigate('/build', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setError('');
+    try {
+      await resendVerificationEmail(otpEmail);
+      setResendCooldown(60);
+    } catch (err: any) {
+      setError(err.message || 'فشل إعادة إرسال رمز التحقق');
     }
   };
 
@@ -83,6 +183,184 @@ export const AuthPage: React.FC = () => {
     setError('');
     setFormData({ email: '', name: '', password: '', confirmPassword: '' });
   };
+
+  if (mode === 'verify-otp') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #faf8f6 0%, #e8e4e0 100%)',
+        padding: '24px',
+        direction: 'rtl'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '440px',
+          background: '#ffffff',
+          borderRadius: '20px',
+          padding: '40px',
+          boxShadow: '0 8px 32px rgba(74, 69, 64, 0.12)',
+          border: '1px solid #e8e4e0'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              background: '#4A4540',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px'
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+            </div>
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#4A4540',
+              marginBottom: '8px',
+              fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
+            }}>
+              تحقق من بريدك الإلكتروني
+            </h1>
+            <p style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
+              lineHeight: '1.6'
+            }}>
+              أرسلنا رمز تحقق مكون من 6 أرقام إلى
+              <br />
+              <span style={{ fontWeight: '600', color: '#4A4540', direction: 'ltr', display: 'inline-block' }}>{otpEmail}</span>
+            </p>
+          </div>
+
+          {error && (
+            <div style={{
+              padding: '12px 16px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '10px',
+              marginBottom: '20px',
+              fontSize: '14px',
+              color: '#dc2626',
+              fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleOtpSubmit}>
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'center',
+              marginBottom: '24px',
+              direction: 'ltr'
+            }}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={el => { otpRefs.current[i] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={e => handleOtpChange(i, e.target.value)}
+                  onKeyDown={e => handleOtpKeyDown(i, e)}
+                  onPaste={i === 0 ? handleOtpPaste : undefined}
+                  style={{
+                    width: '48px',
+                    height: '56px',
+                    textAlign: 'center',
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    border: digit ? '2px solid #4A4540' : '1px solid #e8e4e0',
+                    borderRadius: '12px',
+                    outline: 'none',
+                    background: digit ? '#faf8f6' : '#ffffff',
+                    transition: 'all 0.2s',
+                    fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#4A4540'}
+                  onBlur={e => { if (!digit) e.target.style.borderColor = '#e8e4e0'; }}
+                />
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otp.some(d => !d)}
+              style={{
+                width: '100%',
+                padding: '14px 24px',
+                background: loading || otp.some(d => !d) ? '#9B8B7A' : '#4A4540',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: loading || otp.some(d => !d) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
+                marginBottom: '16px'
+              }}
+              onMouseEnter={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#3D3834'; }}
+              onMouseLeave={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#4A4540'; }}
+            >
+              {loading ? 'جاري التحقق...' : 'تحقق'}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif' }}>
+              لم تستلم الرمز؟{' '}
+            </span>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendCooldown > 0}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: resendCooldown > 0 ? '#9B8B7A' : '#4A4540',
+                fontWeight: '600',
+                fontSize: '14px',
+                cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                padding: '0',
+                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
+              }}
+            >
+              {resendCooldown > 0 ? `إعادة إرسال (${resendCooldown}ث)` : 'إعادة إرسال الرمز'}
+            </button>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setError(''); setOtp(['', '', '', '', '', '']); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#9B8B7A',
+                fontSize: '14px',
+                cursor: 'pointer',
+                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
+              }}
+            >
+              العودة إلى إنشاء حساب
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -158,33 +436,14 @@ export const AuthPage: React.FC = () => {
         <form onSubmit={handleSubmit}>
           {mode === 'register' && (
             <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#4A4540',
-                marginBottom: '8px',
-                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
-              }}>
-                الاسم
-              </label>
+              <label style={labelStyle}>الاسم</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="أدخل اسمك"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e8e4e0',
-                  borderRadius: '10px',
-                  fontSize: '15px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                  fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
-                  boxSizing: 'border-box'
-                }}
+                style={inputStyle}
                 onFocus={(e) => e.target.style.borderColor = '#4A4540'}
                 onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
               />
@@ -192,16 +451,7 @@ export const AuthPage: React.FC = () => {
           )}
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#4A4540',
-              marginBottom: '8px',
-              fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
-            }}>
-              البريد الإلكتروني
-            </label>
+            <label style={labelStyle}>البريد الإلكتروني</label>
             <input
               type="email"
               name="email"
@@ -209,34 +459,14 @@ export const AuthPage: React.FC = () => {
               onChange={handleInputChange}
               placeholder="you@example.com"
               dir="ltr"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e8e4e0',
-                borderRadius: '10px',
-                fontSize: '15px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
-                boxSizing: 'border-box',
-                textAlign: 'left'
-              }}
+              style={{ ...inputStyle, textAlign: 'left' }}
               onFocus={(e) => e.target.style.borderColor = '#4A4540'}
               onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
             />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#4A4540',
-              marginBottom: '8px',
-              fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
-            }}>
-              كلمة المرور
-            </label>
+            <label style={labelStyle}>كلمة المرور</label>
             <input
               type="password"
               name="password"
@@ -244,18 +474,7 @@ export const AuthPage: React.FC = () => {
               onChange={handleInputChange}
               placeholder="••••••••"
               dir="ltr"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e8e4e0',
-                borderRadius: '10px',
-                fontSize: '15px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
-                boxSizing: 'border-box',
-                textAlign: 'left'
-              }}
+              style={{ ...inputStyle, textAlign: 'left' }}
               onFocus={(e) => e.target.style.borderColor = '#4A4540'}
               onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
             />
@@ -263,16 +482,7 @@ export const AuthPage: React.FC = () => {
 
           {mode === 'register' && (
             <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#4A4540',
-                marginBottom: '8px',
-                fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
-              }}>
-                تأكيد كلمة المرور
-              </label>
+              <label style={labelStyle}>تأكيد كلمة المرور</label>
               <input
                 type="password"
                 name="confirmPassword"
@@ -280,18 +490,7 @@ export const AuthPage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="••••••••"
                 dir="ltr"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e8e4e0',
-                  borderRadius: '10px',
-                  fontSize: '15px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                  fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
-                  boxSizing: 'border-box',
-                  textAlign: 'left'
-                }}
+                style={{ ...inputStyle, textAlign: 'left' }}
                 onFocus={(e) => e.target.style.borderColor = '#4A4540'}
                 onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
               />
