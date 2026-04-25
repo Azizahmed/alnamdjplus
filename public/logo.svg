@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="40" viewBox="0 0 150 40">
+  <style>
+    text {
+      font-family: 'TheYearofTheCamel', 'Noto Sans Arabic', Tahoma, sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      fill: #4A4540;
+    }
+  </style>
+  <text x="75" y="27" text-anchor="middle" dominant-baseline="middle">النموذج +</text>
+</svg>
