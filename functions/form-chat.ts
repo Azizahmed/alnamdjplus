@@ -86,7 +86,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     const { data: form, error: formError } = await insforge.database
       .from('forms')
-      .select('id, title, description, form_questions(id, type, label, description, required, order, settings), conditional_rules(id, question_id, target_question_id, condition, action)')
+      .select('id, title, description, form_questions(id, type, label, description, required, order, settings)')
       .eq('id', formId)
       .eq('user_id', userData.user.id);
 
@@ -95,15 +95,32 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const formData = form[0];
+    const questions = (formData.form_questions || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    const questionIds = questions.map((q: any) => q.id);
+
+    let conditionalRules: any[] = [];
+    if (questionIds.length > 0) {
+      const { data: rules, error: rulesError } = await insforge.database
+        .from('conditional_rules')
+        .select('id, question_id, target_question_id, condition, action')
+        .in('question_id', questionIds);
+
+      if (rulesError) {
+        throw new Error(rulesError.message || 'Failed to load conditional rules');
+      }
+
+      conditionalRules = rules || [];
+    }
+
     const formContext = `
 Form: ${formData.title}
 Description: ${formData.description || 'No description'}
 Questions:
-${formData.form_questions?.map((q: any) => `- ${q.order + 1}. ${q.label} (${q.type})${q.required ? ' [Required]' : ''}${q.description ? ` - ${q.description}` : ''}`).join('\n') || 'No questions'}
+${questions.map((q: any) => `- ${(q.order ?? 0) + 1}. ${q.label} (${q.type})${q.required ? ' [Required]' : ''}${q.description ? ` - ${q.description}` : ''}`).join('\n') || 'No questions'}
 Conditional Rules:
-${formData.conditional_rules?.map((r: any) => {
-  const sourceQ = formData.form_questions?.find((q: any) => q.id === r.question_id);
-  const targetQ = formData.form_questions?.find((q: any) => q.id === r.target_question_id);
+${conditionalRules.map((r: any) => {
+  const sourceQ = questions.find((q: any) => q.id === r.question_id);
+  const targetQ = questions.find((q: any) => q.id === r.target_question_id);
   return `- ${sourceQ?.label || 'Unknown'} ${r.action === 'show' ? 'shows' : 'hides'} ${targetQ?.label || 'Unknown'} when ${JSON.stringify(r.condition)}`;
 }).join('\n') || 'No conditional rules'}
 `;
@@ -180,7 +197,7 @@ Always respond in the same language as the user's message. If the user writes in
     if (action) {
       switch (action.action) {
         case 'add_question': {
-          const maxOrder = Math.max(...(formData.form_questions?.map((q: any) => q.order) || [-1]));
+          const maxOrder = Math.max(...(questions.map((q: any) => q.order) || [-1]));
           await insforge.database
             .from('form_questions')
             .insert([{
@@ -227,6 +244,7 @@ Always respond in the same language as the user's message. If the user writes in
       }
     );
   } catch (error) {
+    console.error('form-chat failed:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
