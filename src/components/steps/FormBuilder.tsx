@@ -1997,7 +1997,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                       <div style={{
                         position: 'absolute',
                         top: '48px',
-                        right: '0',
+                        left: '0',
                         display: 'flex',
                         gap: '8px',
                         background: '#ffffff',
