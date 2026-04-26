@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useI18n } from '../i18n';
 
 interface ComponentPickerProps {
   isOpen: boolean;
@@ -18,29 +17,31 @@ interface QuestionTypeItem {
   hasOptions?: boolean;
 }
 
+const DEFAULT_OPTIONS = ['الخيار 1', 'الخيار 2', 'الخيار 3'];
+
 const QUESTION_TYPES: QuestionTypeItem[] = [
   { id: 'short_answer', name: 'إجابة قصيرة', icon: '≡', category: 'questions', description: 'حقل نصي لسطر واحد' },
-  { id: 'long_answer', name: 'إجابة طويلة', icon: '☰', category: 'questions', description: 'منطقة نص متعددة الأسطر' },
-  { id: 'multiple_choice', name: 'اختيار متعدد', icon: '◉', category: 'questions', description: 'اختر خياراً واحداً', hasOptions: true },
-  { id: 'checkboxes', name: 'خانات اختيار', icon: '☑', category: 'questions', description: 'اختر خيارات متعددة', hasOptions: true },
-  { id: 'dropdown', name: 'قائمة منسدلة', icon: '⌄', category: 'questions', description: 'قائمة اختيار منسدلة', hasOptions: true },
-  { id: 'multi_select', name: 'اختيار متعدد', icon: '✓✓', category: 'questions', description: 'اختيار متعدد من قائمة', hasOptions: true },
-  { id: 'number', name: 'رقم', icon: '#', category: 'questions', description: 'إدخال رقمي' },
+  { id: 'long_answer', name: 'إجابة طويلة', icon: '☰', category: 'questions', description: 'مساحة نص متعددة الأسطر' },
+  { id: 'multiple_choice', name: 'اختيار واحد', icon: '◉', category: 'questions', description: 'اختيار إجابة واحدة من عدة خيارات', hasOptions: true },
+  { id: 'checkboxes', name: 'خانات اختيار', icon: '☑', category: 'questions', description: 'اختيار أكثر من إجابة', hasOptions: true },
+  { id: 'dropdown', name: 'قائمة منسدلة', icon: '⌄', category: 'questions', description: 'اختيار من قائمة منسدلة', hasOptions: true },
+  { id: 'multi_select', name: 'اختيار متعدد', icon: '✓✓', category: 'questions', description: 'اختيار عدة عناصر من قائمة', hasOptions: true },
+  { id: 'number', name: 'رقم', icon: '#', category: 'questions', description: 'إدخال قيمة رقمية' },
   { id: 'email', name: 'بريد إلكتروني', icon: '@', category: 'questions', description: 'إدخال بريد إلكتروني' },
-  { id: 'phone', name: 'رقم هاتف', icon: '✆', category: 'questions', description: 'إدخال رقم هاتف' },
-  { id: 'link', name: 'رابط', icon: '🔗', category: 'questions', description: 'إدخال رابط URL' },
-  { id: 'file_upload', name: 'رفع ملف', icon: '⬆', category: 'questions', description: 'رفع ملفات' },
-  { id: 'date', name: 'تاريخ', icon: '📅', category: 'questions', description: 'اختيار التاريخ' },
-  { id: 'time', name: 'وقت', icon: '⏱', category: 'questions', description: 'اختيار الوقت' },
-  { id: 'linear_scale', name: 'مقياس خطي', icon: '•••', category: 'questions', description: 'تقييم بالمقياس' },
-  { id: 'matrix', name: 'مصفوفة', icon: '⊞', category: 'questions', description: 'إدخال شبكي' },
-  { id: 'rating', name: 'تقييم', icon: '☆', category: 'questions', description: 'تقييم بالنجوم' },
-  { id: 'signature', name: 'توقيع', icon: '✎', category: 'questions', description: 'توقيع رقمي' },
-  { id: 'ranking', name: 'ترتيب', icon: '⇅', category: 'questions', description: 'ترتيب العناصر', hasOptions: true },
+  { id: 'phone', name: 'رقم هاتف', icon: '☎', category: 'questions', description: 'إدخال رقم هاتف' },
+  { id: 'link', name: 'رابط', icon: '🔗', category: 'questions', description: 'إدخال رابط أو عنوان URL' },
+  { id: 'file_upload', name: 'رفع ملف', icon: '↑', category: 'questions', description: 'رفع ملف أو مرفق' },
+  { id: 'date', name: 'تاريخ', icon: '📅', category: 'questions', description: 'اختيار تاريخ' },
+  { id: 'time', name: 'وقت', icon: '⏱', category: 'questions', description: 'اختيار وقت' },
+  { id: 'linear_scale', name: 'مقياس خطي', icon: '•••', category: 'questions', description: 'تقييم باستخدام مقياس رقمي' },
+  { id: 'matrix', name: 'مصفوفة', icon: '⊞', category: 'questions', description: 'مجموعة أسئلة ضمن جدول' },
+  { id: 'rating', name: 'تقييم', icon: '☆', category: 'questions', description: 'تقييم بالنجوم أو الدرجات' },
+  { id: 'signature', name: 'توقيع', icon: '✎', category: 'questions', description: 'جمع توقيع رقمي' },
+  { id: 'ranking', name: 'ترتيب', icon: '⇅', category: 'questions', description: 'ترتيب عناصر حسب الأولوية', hasOptions: true },
 ];
 
 const LAYOUT_BLOCKS: QuestionTypeItem[] = [
-  { id: 'statement', name: 'بيان', icon: '¶', category: 'layout', description: 'عرض نصي' },
+  { id: 'statement', name: 'نص توضيحي', icon: '¶', category: 'layout', description: 'عرض نص داخل النموذج بدون سؤال' },
 ];
 
 export const ComponentPicker: React.FC<ComponentPickerProps> = ({
@@ -49,33 +50,30 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
   onSelect,
   onGenerate
 }) => {
-  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<QuestionTypeItem | null>(null);
   const [showGenerateInput, setShowGenerateInput] = useState(false);
   const [generatePrompt, setGeneratePrompt] = useState('');
-  
-  // Inline edit states
+
   const [editText, setEditText] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editOptions, setEditOptions] = useState<string[]>(['الخيار 1', 'الخيار 2', 'الخيار 3']);
+  const [editOptions, setEditOptions] = useState<string[]>(DEFAULT_OPTIONS);
   const [editMode, setEditMode] = useState<'manual' | 'ai'>('manual');
   const [aiInstructions, setAiInstructions] = useState('');
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
   const generateInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const filteredQuestions = QUESTION_TYPES.filter(q => 
+  const filteredQuestions = QUESTION_TYPES.filter(q =>
     q.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  const filteredLayouts = LAYOUT_BLOCKS.filter(l => 
+
+  const filteredLayouts = LAYOUT_BLOCKS.filter(l =>
     l.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredItems = [...filteredQuestions, ...filteredLayouts];
 
-  // Reset state when opened
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
@@ -84,25 +82,23 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
       setGeneratePrompt('');
       setEditText('');
       setEditDescription('');
-      setEditOptions(['الخيار 1', 'الخيار 2', 'الخيار 3']);
+      setEditOptions(DEFAULT_OPTIONS);
       setEditMode('manual');
       setAiInstructions('');
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
-  // Update edit fields when selection changes
   useEffect(() => {
     if (selectedItem) {
-      setEditText(`Your ${selectedItem.name.toLowerCase()} question`);
+      setEditText(selectedItem.id === 'statement' ? 'اكتب النص التوضيحي هنا' : `اكتب سؤال ${selectedItem.name}`);
       setEditDescription('');
-      setEditOptions(['الخيار 1', 'الخيار 2', 'الخيار 3']);
+      setEditOptions(DEFAULT_OPTIONS);
       setAiInstructions('');
       setEditMode('manual');
     }
   }, [selectedItem]);
 
-  // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -123,7 +119,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
 
   const handleAddComponent = () => {
     if (!selectedItem) return;
-    
+
     if (editMode === 'ai' && aiInstructions.trim()) {
       onSelect(selectedItem.id, { aiPrompt: aiInstructions.trim() });
     } else {
@@ -137,7 +133,6 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
   };
 
   const handleQuickAdd = (item: QuestionTypeItem) => {
-    // Double-click or quick add without customization
     onSelect(item.id);
     onClose();
   };
@@ -176,10 +171,10 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        paddingTop: '6vh'
+        paddingTop: '6vh',
+        direction: 'rtl'
       }}
     >
-      {/* Overlay */}
       <div
         onClick={onClose}
         style={{
@@ -189,8 +184,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
           zIndex: 0
         }}
       />
-      
-      {/* Modal */}
+
       <div
         style={{
           position: 'relative',
@@ -204,7 +198,6 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
           animation: 'fadeIn 0.15s ease-out'
         }}
       >
-        {/* Search Input */}
         <div style={{
           padding: '14px 20px',
           borderBottom: '1px solid #f3f4f6',
@@ -221,7 +214,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t.searchComponents}
+            placeholder="ابحث في المكونات..."
             style={{
               flex: 1,
               fontSize: '15px',
@@ -229,7 +222,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
               border: 'none',
               outline: 'none',
               background: 'transparent',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              textAlign: 'right',
+              direction: 'rtl'
             }}
           />
           {selectedItem && (
@@ -249,14 +244,12 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                 gap: '6px'
               }}
             >
-              Add {selectedItem.name}
+              إضافة {selectedItem.name}
             </button>
           )}
         </div>
 
-        {/* Content */}
         <div style={{ display: 'flex', height: '65vh', maxHeight: '500px' }}>
-          {/* Left: Component List */}
           <div style={{
             width: '220px',
             borderInlineStart: '1px solid #f3f4f6',
@@ -264,18 +257,15 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
             padding: '8px 0',
             flexShrink: 0
           }}>
-            {/* Generate with AI */}
             {onGenerate && !showGenerateInput && (
               <>
                 <div style={{
                   padding: '6px 12px 4px',
                   fontSize: '10px',
-                  fontWeight: '600',
-                  color: '#9ca3af',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
+                  fontWeight: '700',
+                  color: '#9ca3af'
                 }}>
-                  AI Generate
+                  إنشاء بالذكاء الاصطناعي
                 </div>
                 <button
                   onClick={() => {
@@ -296,28 +286,25 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    textAlign: 'left',
+                    textAlign: 'right',
                     fontFamily: 'inherit'
                   }}
                 >
                   <span>✨</span>
-                  Generate with AI
+                  إنشاء نموذج بالذكاء الاصطناعي
                 </button>
               </>
             )}
-            
-            {/* Questions Section */}
+
             {filteredQuestions.length > 0 && !showGenerateInput && (
               <>
                 <div style={{
                   padding: '10px 12px 4px',
                   fontSize: '10px',
-                  fontWeight: '600',
-                  color: '#9ca3af',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
+                  fontWeight: '700',
+                  color: '#9ca3af'
                 }}>
-                  Questions
+                  الأسئلة
                 </div>
                 {filteredQuestions.map((item) => {
                   const isSelected = selectedItem?.id === item.id;
@@ -339,7 +326,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        textAlign: 'left',
+                        textAlign: 'right',
                         fontFamily: 'inherit',
                         transition: 'all 0.1s'
                       }}
@@ -359,18 +346,15 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
               </>
             )}
 
-            {/* Layout Blocks */}
             {filteredLayouts.length > 0 && !showGenerateInput && (
               <>
                 <div style={{
                   padding: '10px 12px 4px',
                   fontSize: '10px',
-                  fontWeight: '600',
-                  color: '#9ca3af',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
+                  fontWeight: '700',
+                  color: '#9ca3af'
                 }}>
-                  Layout
+                  تنسيق النموذج
                 </div>
                 {filteredLayouts.map((item) => {
                   const isSelected = selectedItem?.id === item.id;
@@ -392,7 +376,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        textAlign: 'left',
+                        textAlign: 'right',
                         fontFamily: 'inherit'
                       }}
                     >
@@ -413,10 +397,10 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
 
             {filteredItems.length === 0 && !showGenerateInput && (
               <div style={{ padding: '16px', fontSize: '13px', color: '#9ca3af', textAlign: 'center' }}>
-                No results
+                لا توجد نتائج
               </div>
             )}
-            
+
             {showGenerateInput && (
               <div style={{ padding: '12px' }}>
                 <button
@@ -428,16 +412,16 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
-                    marginBottom: '8px'
+                    marginBottom: '8px',
+                    fontFamily: 'inherit'
                   }}
                 >
-                  ← العودة للقائمة
+                  العودة إلى القائمة
                 </button>
               </div>
             )}
           </div>
 
-          {/* Right: Edit Panel */}
           <div style={{
             flex: 1,
             display: 'flex',
@@ -446,14 +430,13 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
             background: '#fafafa'
           }}>
             {showGenerateInput ? (
-              /* AI Generate Mode */
               <div style={{ padding: '20px' }}>
                 <div style={{ marginBottom: '12px' }}>
                   <div style={{ fontSize: '15px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
-                    ✨ Generate with AI
+                    ✨ إنشاء بالذكاء الاصطناعي
                   </div>
                   <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                    Describe exactly what you want
+                    اكتب وصفاً واضحاً لما تريد إضافته إلى النموذج
                   </div>
                 </div>
                 <div style={{ position: 'relative' }}>
@@ -461,12 +444,12 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     ref={generateInputRef}
                     value={generatePrompt}
                     onChange={(e) => setGeneratePrompt(e.target.value)}
-                    placeholder="مثال: اسأل عن المناسبات (وليمة، نكاح، بارات) التي سيحضرها الضيف بخانات اختيار، وإذا كان سيحضر مع مرافق..."
+                    placeholder="مثال: أضف سؤالاً عن القيود الغذائية مع خيارات: نباتي، حلال، بدون حساسية. واجعل السؤال مطلوباً."
                     style={{
                       width: '100%',
                       minHeight: '140px',
                       padding: '12px',
-                      paddingRight: '48px',
+                      paddingLeft: '48px',
                       fontSize: '14px',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
@@ -474,7 +457,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       fontFamily: 'inherit',
                       resize: 'vertical',
                       background: '#ffffff',
-                      lineHeight: '1.5'
+                      lineHeight: '1.5',
+                      textAlign: 'right',
+                      direction: 'rtl'
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                     onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -513,9 +498,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                 </div>
               </div>
             ) : selectedItem ? (
-              /* Edit Selected Component */
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* Header */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -546,7 +529,6 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                   </div>
                 </div>
 
-                {/* Mode Toggle */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -568,10 +550,11 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       border: `1px solid ${editMode === 'manual' ? '#0E7C86' : '#e5e7eb'}`,
                       borderRadius: '10px',
                       cursor: 'pointer',
-                      boxShadow: editMode === 'manual' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none'
+                      boxShadow: editMode === 'manual' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none',
+                      fontFamily: 'inherit'
                     }}
                   >
-                    Edit
+                    تعديل يدوي
                   </button>
                   <button
                     onClick={() => setEditMode('ai')}
@@ -589,25 +572,25 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '6px',
-                      boxShadow: editMode === 'ai' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none'
+                      boxShadow: editMode === 'ai' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none',
+                      fontFamily: 'inherit'
                     }}
                   >
-                    ✨ AI
+                    ✨ تعديل بالذكاء الاصطناعي
                   </button>
                 </div>
 
                 {editMode === 'manual' ? (
                   <>
-                    {/* Question Text */}
                     <div>
                       <label style={{ fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
-                        Question
+                        السؤال
                       </label>
                       <input
                         type="text"
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
-                        placeholder="أدخل سؤالك..."
+                        placeholder="اكتب السؤال هنا..."
                         style={{
                           width: '100%',
                           padding: '8px 10px',
@@ -615,23 +598,24 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                           border: '1px solid #e5e7eb',
                           borderRadius: '6px',
                           outline: 'none',
-                          background: '#ffffff'
+                          background: '#ffffff',
+                          textAlign: 'right',
+                          direction: 'rtl'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                         onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       />
                     </div>
 
-                    {/* Description */}
                     <div>
                       <label style={{ fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
-                        Description <span style={{ color: '#9ca3af', fontWeight: '400' }}>(اختياري)</span>
+                        الوصف <span style={{ color: '#9ca3af', fontWeight: '400' }}>(اختياري)</span>
                       </label>
                       <input
                         type="text"
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
-                        placeholder="أضف نصًا مساعداً..."
+                        placeholder="أضف نصاً مساعداً أو توضيحاً..."
                         style={{
                           width: '100%',
                           padding: '8px 10px',
@@ -639,18 +623,19 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                           border: '1px solid #e5e7eb',
                           borderRadius: '6px',
                           outline: 'none',
-                          background: '#ffffff'
+                          background: '#ffffff',
+                          textAlign: 'right',
+                          direction: 'rtl'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                         onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       />
                     </div>
 
-                    {/* Options */}
                     {selectedItem.hasOptions && (
                       <div>
                         <label style={{ fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
-                          Options
+                          الخيارات
                         </label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {editOptions.map((option, index) => (
@@ -669,7 +654,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                                   border: '1px solid #e5e7eb',
                                   borderRadius: '5px',
                                   outline: 'none',
-                                  background: '#ffffff'
+                                  background: '#ffffff',
+                                  textAlign: 'right',
+                                  direction: 'rtl'
                                 }}
                                 onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -689,6 +676,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                                     color: '#9ca3af',
                                     fontSize: '14px'
                                   }}
+                                  aria-label="حذف الخيار"
                                 >
                                   ×
                                 </button>
@@ -706,25 +694,25 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                               border: '1px dashed #fcd34d',
                               borderRadius: '4px',
                               cursor: 'pointer',
-                              marginTop: '2px'
+                              marginTop: '2px',
+                              fontFamily: 'inherit'
                             }}
                           >
-                            + Add option
+                            + إضافة خيار
                           </button>
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
-                  /* AI Mode */
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px', display: 'block' }}>
-                      Describe how to customize
+                      صف التعديل المطلوب
                     </label>
                     <textarea
                       value={aiInstructions}
                       onChange={(e) => setAiInstructions(e.target.value)}
-                      placeholder={`مثال: "اسأل عن القيود الغذائية مع خيارات: نباتي، نباتي صارم، حلال، كوشير، بدون. اجعله مطلوباً."`}
+                      placeholder="مثال: اجعل السؤال مطلوباً وأضف خيارات واضحة ومختصرة."
                       rows={4}
                       style={{
                         width: '100%',
@@ -736,7 +724,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         resize: 'vertical',
                         fontFamily: 'inherit',
                         lineHeight: '1.4',
-                        background: '#ffffff'
+                        background: '#ffffff',
+                        textAlign: 'right',
+                        direction: 'rtl'
                       }}
                       onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                       onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -744,7 +734,6 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                   </div>
                 )}
 
-                {/* Preview */}
                 <div style={{
                   marginTop: '8px',
                   padding: '12px',
@@ -752,11 +741,11 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                   borderRadius: '8px',
                   border: '1px solid #e5e7eb'
                 }}>
-                  <div style={{ fontSize: '10px', fontWeight: '600', color: '#9ca3af', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Preview
+                  <div style={{ fontSize: '10px', fontWeight: '600', color: '#9ca3af', marginBottom: '8px' }}>
+                    معاينة
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '2px' }}>
-                    {editText || t.yourQuestion} <span style={{ color: '#0E7C86' }}>*</span>
+                    {editText || 'سؤالك هنا'} <span style={{ color: '#0E7C86' }}>*</span>
                   </div>
                   {editDescription && (
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
@@ -767,9 +756,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
                       {editOptions.filter(o => o.trim()).slice(0, 3).map((opt, i) => (
                         <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#374151' }}>
-                          <input 
-                            type={selectedItem.id === 'multiple_choice' ? 'radio' : 'checkbox'} 
-                            disabled 
+                          <input
+                            type={selectedItem.id === 'multiple_choice' ? 'radio' : 'checkbox'}
+                            disabled
                             style={{ accentColor: '#0E7C86' }}
                           />
                           {opt}
@@ -777,7 +766,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       ))}
                       {editOptions.filter(o => o.trim()).length > 3 && (
                         <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                          +{editOptions.filter(o => o.trim()).length - 3} more
+                          +{editOptions.filter(o => o.trim()).length - 3} خيارات أخرى
                         </div>
                       )}
                     </div>
@@ -793,13 +782,14 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         border: 'none',
                         borderBottom: '1px solid #e5e7eb',
                         background: 'transparent',
-                        marginTop: '4px'
+                        marginTop: '4px',
+                        textAlign: 'right',
+                        direction: 'rtl'
                       }}
                     />
                   )}
                 </div>
 
-                {/* Add Button */}
                 <button
                   onClick={handleAddComponent}
                   style={{
@@ -812,17 +802,17 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    marginTop: '4px'
+                    marginTop: '4px',
+                    fontFamily: 'inherit'
                   }}
                 >
-                  Add to Form
+                  إضافة إلى النموذج
                 </button>
                 <div style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
-                  Double-click a component to add without editing
+                  انقر مرتين على أي مكون لإضافته مباشرة بدون تعديل
                 </div>
               </div>
             ) : (
-              /* No Selection */
               <div style={{
                 flex: 1,
                 display: 'flex',
@@ -846,17 +836,17 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                   <span style={{ fontSize: '20px', color: '#d1d5db' }}>+</span>
                 </div>
                 <div style={{ fontSize: '15px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
-                  اختر مكونًا
+                  اختر مكوناً
                 </div>
                 <div style={{ fontSize: '13px', lineHeight: '1.5', maxWidth: '220px' }}>
-                  انقر للتخصيص قبل الإضافة، أو انقر نقراً مزدوجاً للإضافة بسرعة.
+                  انقر على أي مكون لتعديله قبل الإضافة، أو انقر مرتين لإضافته مباشرة.
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.95); }
