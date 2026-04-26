@@ -1191,7 +1191,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                           setShowComponentPicker(true);
                         }}
                         disabled={isGenerating}
-                        position="right"
+                        position="left"
                       />
                     {/* Question Content - Inline Editable */}
                     <div style={{ marginBottom: '16px' }}>
@@ -2133,7 +2133,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                         setShowComponentPicker(true);
                       }}
                     disabled={isGenerating}
-                      position="right"
+                      position="left"
                   />
                 </div>
                 )}

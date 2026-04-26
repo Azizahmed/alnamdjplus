@@ -45,7 +45,7 @@ export const SideAddButton: React.FC<SideAddButtonProps> = ({
           transition: 'all 0.2s',
           opacity: disabled ? 0.4 : (isHovered ? 1 : 0.6)
         }}
-        title="Add component"
+        title="إضافة مكون"
       >
         +
       </button>
