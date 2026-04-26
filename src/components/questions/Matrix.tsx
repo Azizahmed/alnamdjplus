@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { QuestionProps } from './ShortAnswer';
 
 // Helper to normalize int or list to array of strings
@@ -16,7 +16,7 @@ export const Matrix: React.FC<QuestionProps> = ({
   onChange,
   disabled = false,
   hideLabel = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;

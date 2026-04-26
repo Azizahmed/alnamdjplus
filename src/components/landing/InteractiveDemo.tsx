@@ -104,8 +104,8 @@ export const InteractiveDemo: React.FC = () => {
       backgroundColor: '#ffffff',
       borderRadius: '16px',
       overflow: 'hidden',
-      boxShadow: '0 4px 24px rgba(74, 69, 64, 0.12)',
-      border: '1px solid #e8e4e0'
+      boxShadow: '0 4px 24px rgba(18, 58, 63, 0.12)',
+      border: '1px solid #EEF3F2'
     }}>
       {/* Tabs */}
       <div style={{
@@ -122,8 +122,8 @@ export const InteractiveDemo: React.FC = () => {
               padding: '16px 24px',
               background: activeTab === tab.id ? '#ffffff' : 'transparent',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid #4A4540' : '3px solid transparent',
-              color: activeTab === tab.id ? '#4A4540' : '#6b7280',
+              borderBottom: activeTab === tab.id ? '3px solid #123A3F' : '3px solid transparent',
+              color: activeTab === tab.id ? '#123A3F' : '#6b7280',
               fontSize: '15px',
               fontWeight: activeTab === tab.id ? '600' : '500',
               cursor: 'pointer',
@@ -166,12 +166,12 @@ export const InteractiveDemo: React.FC = () => {
                       remarkPlugins={[remarkGfm]}
                       components={{
                         p: ({ children }) => <span style={{ margin: 0 }}>{children}</span>,
-                        strong: ({ children }) => <strong style={{ color: '#4A4540' }}>{children}</strong>
+                        strong: ({ children }) => <strong style={{ color: '#123A3F' }}>{children}</strong>
                       }}
                     >
                       {question.question_text}
                     </ReactMarkdown>
-                    {question.required && <span style={{ color: '#4A4540', marginInlineStart: '4px' }}>*</span>}
+                    {question.required && <span style={{ color: '#123A3F', marginInlineStart: '4px' }}>*</span>}
                   </div>
 
                   {/* Description with Markdown support */}
@@ -186,7 +186,7 @@ export const InteractiveDemo: React.FC = () => {
                         remarkPlugins={[remarkGfm]}
                         components={{
                           p: ({ children }) => <span style={{ margin: 0 }}>{children}</span>,
-                          strong: ({ children }) => <strong style={{ color: '#4A4540' }}>{children}</strong>
+                          strong: ({ children }) => <strong style={{ color: '#123A3F' }}>{children}</strong>
                         }}
                       >
                         {question.description}
@@ -200,8 +200,8 @@ export const InteractiveDemo: React.FC = () => {
                     value={formData[question.id]}
                     onChange={(value) => handleAnswerChange(question.id, value)}
                     hideLabel={true}
-                    accentColor="#4A4540"
-                    boldTextColor="#4A4540"
+                    accentColor="#123A3F"
+                    boldTextColor="#123A3F"
                   />
                 </div>
               ))}
@@ -210,7 +210,7 @@ export const InteractiveDemo: React.FC = () => {
               style={{
                 marginTop: '32px',
                 padding: '14px 28px',
-                background: '#4A4540',
+                background: '#123A3F',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -221,11 +221,11 @@ export const InteractiveDemo: React.FC = () => {
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#3D3834';
+                e.currentTarget.style.background = '#0B2B30';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#4A4540';
+                e.currentTarget.style.background = '#123A3F';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
@@ -254,30 +254,30 @@ export const InteractiveDemo: React.FC = () => {
             }}>
               <div style={{
                 padding: '16px',
-                background: '#faf8f6',
+                background: '#F7FAF8',
                 borderRadius: '12px',
-                border: '1px solid #e8e4e0'
+                border: '1px solid #EEF3F2'
               }}>
                 <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>إجمالي المشاهدات</div>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#4A4540' }}>105</div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#123A3F' }}>105</div>
               </div>
               <div style={{
                 padding: '16px',
-                background: '#faf8f6',
+                background: '#F7FAF8',
                 borderRadius: '12px',
-                border: '1px solid #e8e4e0'
+                border: '1px solid #EEF3F2'
               }}>
                 <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>الردود</div>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#4A4540' }}>45</div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#123A3F' }}>45</div>
               </div>
               <div style={{
                 padding: '16px',
-                background: '#faf8f6',
+                background: '#F7FAF8',
                 borderRadius: '12px',
-                border: '1px solid #e8e4e0'
+                border: '1px solid #EEF3F2'
               }}>
                 <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Completion Rate</div>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#4A4540' }}>43%</div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#123A3F' }}>43%</div>
               </div>
             </div>
 
@@ -354,7 +354,7 @@ export const InteractiveDemo: React.FC = () => {
                         transition: 'background 0.15s ease'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#faf8f6';
+                        e.currentTarget.style.background = '#F7FAF8';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = 'transparent';
@@ -372,9 +372,9 @@ export const InteractiveDemo: React.FC = () => {
                           alignItems: 'center',
                           gap: '4px',
                           padding: '4px 10px',
-                          background: '#faf8f6',
+                          background: '#F7FAF8',
                           borderRadius: '6px',
-                          color: '#4A4540',
+                          color: '#123A3F',
                           fontWeight: '600'
                         }}>
                           {'⭐'.repeat(submission.responses[2] as number)}
@@ -399,7 +399,7 @@ export const InteractiveDemo: React.FC = () => {
             <div style={{
               marginTop: '20px',
               padding: '12px',
-              background: '#faf8f6',
+              background: '#F7FAF8',
               borderRadius: '8px',
               textAlign: 'center',
               fontSize: '13px',
@@ -422,7 +422,7 @@ export const InteractiveDemo: React.FC = () => {
                 background: '#ffffff',
                 marginBottom: '16px'
               }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: '#4A4540', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#123A3F', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   أنت
                 </div>
                 <div style={{ fontSize: '15px', color: '#1f2937' }}>
@@ -448,13 +448,13 @@ export const InteractiveDemo: React.FC = () => {
 
                   <ul style={{ margin: '0 0 20px 0', paddingLeft: '20px' }}>
                     <li style={{ marginBottom: '10px' }}>
-                      <span style={{ color: '#4A4540', fontWeight: '500' }}>إجمالي الاستجابات</span>: بلغ عدد الاستجابات الكاملة للاستبيان 45 استجابة، مما يدل على تفاعل قوي من المشاركين.
+                      <span style={{ color: '#123A3F', fontWeight: '500' }}>إجمالي الاستجابات</span>: بلغ عدد الاستجابات الكاملة للاستبيان 45 استجابة، مما يدل على تفاعل قوي من المشاركين.
                     </li>
                     <li style={{ marginBottom: '10px' }}>
-                      <span style={{ color: '#4A4540', fontWeight: '500' }}>نسبة الإكمال</span>: أكمل 43% من المشاهدين الاستبيان، مما يعكس استجابة جيدة من إجمالي 105 مشاهدات.
+                      <span style={{ color: '#123A3F', fontWeight: '500' }}>نسبة الإكمال</span>: أكمل 43% من المشاهدين الاستبيان، مما يعكس استجابة جيدة من إجمالي 105 مشاهدات.
                     </li>
                     <li>
-                      <span style={{ color: '#4A4540', fontWeight: '500' }}>متوسط ​​التقييم</span>: 4.6 out of 5 stars, with 89% giving 4 or 5 stars.
+                      <span style={{ color: '#123A3F', fontWeight: '500' }}>متوسط التقييم</span>: 4.6 out of 5 stars, with 89% giving 4 or 5 stars.
                     </li>
                   </ul>
 
@@ -464,16 +464,16 @@ export const InteractiveDemo: React.FC = () => {
 
                   <ul style={{ margin: '0 0 20px 0', paddingLeft: '20px' }}>
                     <li style={{ marginBottom: '10px' }}>
-                      <span style={{ color: '#4A4540', fontWeight: '500' }}>المواضيع الشائعة في التعليقات</span>:
+                      <span style={{ color: '#123A3F', fontWeight: '500' }}>المواضيع الشائعة في التعليقات</span>:
                       <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
                         <li style={{ marginBottom: '6px' }}>
-                          <span style={{ color: '#4A4540', fontWeight: '500' }}>إيجابية</span>: معظم المستجيبين أشادوا بسهولة الاستخدام وميزات الذكاء الاصطناعي.
+                          <span style={{ color: '#123A3F', fontWeight: '500' }}>إيجابية</span>: معظم المستجيبين أشادوا بسهولة الاستخدام وميزات الذكاء الاصطناعي.
                         </li>
                         <li style={{ marginBottom: '6px' }}>
-                          <span style={{ color: '#4A4540', fontWeight: '500' }}>طلبات الميزات</span>: عدة مستخدمين ذكوا رغبتهم في دعم تطبيق الجوال والمزيد من التكاملات.
+                          <span style={{ color: '#123A3F', fontWeight: '500' }}>طلبات الميزات</span>: عدة مستخدمين ذكوا رغبتهم في دعم تطبيق الجوال والمزيد من التكاملات.
                         </li>
                         <li>
-                          <span style={{ color: '#4A4540', fontWeight: '500' }}>المشاكل المبلغ عنها</span>: مستخدم واحد واجه مشاكل انتهاء المهلة على الجوال وفقد التقدم.
+                          <span style={{ color: '#123A3F', fontWeight: '500' }}>المشاكل المبلغ عنها</span>: مستخدم واحد واجه مشاكل انتهاء المهلة على الجوال وفقد التقدم.
                         </li>
                       </ul>
                     </li>
@@ -485,7 +485,7 @@ export const InteractiveDemo: React.FC = () => {
 
                   <ul style={{ margin: '0 0 16px 0', paddingLeft: '20px' }}>
                     <li style={{ marginBottom: '10px' }}>
-                      <span style={{ color: '#4A4540', fontWeight: '500' }}>تنبيه تقييم منخفض</span>:
+                      <span style={{ color: '#123A3F', fontWeight: '500' }}>تنبيه تقييم منخفض</span>:
                       <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
                         <li style={{ marginBottom: '6px' }}>
                           رد من alex.chen@company.com بتقييم <span style={{ color: '#ef4444', fontWeight: '500' }}>نجمة واحدة</span> مع التعليق: "النموذج يستمر في انتهاء المهلة على الجوال. فقدت تقدمي مرتين."
@@ -509,7 +509,7 @@ export const InteractiveDemo: React.FC = () => {
                     <div style={{
                       padding: '8px 14px',
                       borderBottom: '1px solid #e5e7eb',
-                      background: '#faf8f6',
+                      background: '#F7FAF8',
                       display: 'flex',
                       gap: '4px'
                     }}>
@@ -542,7 +542,7 @@ export const InteractiveDemo: React.FC = () => {
                           fontSize: '12px',
                           fontWeight: '600',
                           color: 'white',
-                          background: '#4A4540',
+                          background: '#123A3F',
                           border: 'none',
                           borderRadius: '6px',
                           cursor: 'pointer',
@@ -574,11 +574,11 @@ export const InteractiveDemo: React.FC = () => {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {[
-                          { label: '5 نجوم', value: 22, color: '#4A4540' },
-                          { label: '4 نجوم', value: 18, color: '#5A5550' },
-                          { label: '3 نجوم', value: 3, color: '#9B8B7A' },
+                          { label: '5 نجوم', value: 22, color: '#123A3F' },
+                          { label: '4 نجوم', value: 18, color: '#2A6970' },
+                          { label: '3 نجوم', value: 3, color: '#6AA9AF' },
                           { label: 'نجمتان', value: 1, color: '#C5C0BC' },
-                          { label: 'نجمة واحدة', value: 1, color: '#D4C5B0' }
+                          { label: 'نجمة واحدة', value: 1, color: '#D9E4E1' }
                         ].map((item, idx) => (
                           <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{
@@ -601,7 +601,7 @@ export const InteractiveDemo: React.FC = () => {
                               <div style={{
                                 width: `${(item.value / 22) * 100}%`,
                                 height: '100%',
-                                background: `linear-gradient(90deg, ${item.color} 0%, #5A5550 100%)`,
+                                background: `linear-gradient(90deg, ${item.color} 0%, #2A6970 100%)`,
                                 borderRadius: '6px',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -627,7 +627,7 @@ export const InteractiveDemo: React.FC = () => {
                       <div style={{
                         marginTop: '16px',
                         padding: '12px',
-                        background: '#faf8f6',
+                        background: '#F7FAF8',
                         borderRadius: '8px',
                         display: 'flex',
                         gap: '24px',
@@ -635,15 +635,15 @@ export const InteractiveDemo: React.FC = () => {
                       }}>
                         <div>
                           <span style={{ color: '#6b7280' }}>الإجمالي: </span>
-                          <strong style={{ color: '#4A4540' }}>45</strong>
+                          <strong style={{ color: '#123A3F' }}>45</strong>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280' }}>المتوسط: </span>
-                          <strong style={{ color: '#4A4540' }}>4.6</strong>
+                          <strong style={{ color: '#123A3F' }}>4.6</strong>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280' }}>الأقصى: </span>
-                          <strong style={{ color: '#4A4540' }}>22</strong>
+                          <strong style={{ color: '#123A3F' }}>22</strong>
                         </div>
                       </div>
                     </div>
@@ -660,7 +660,7 @@ export const InteractiveDemo: React.FC = () => {
                       color: '#6b7280'
                     }}>
                       <span>
-                        <strong style={{ color: '#4A4540' }}>5</strong> صفوف
+                        <strong style={{ color: '#123A3F' }}>5</strong> صفوف
                       </span>
                     </div>
                   </div>
@@ -701,7 +701,7 @@ export const InteractiveDemo: React.FC = () => {
                 disabled
                 style={{
                   padding: '12px 24px',
-                  background: '#D4C5B0',
+                  background: '#D9E4E1',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',

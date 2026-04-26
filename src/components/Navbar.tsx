@@ -18,12 +18,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onAccountClick }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const logoSrc = '/logo.png?v=20260410';
 
-  const isBuildPage = location.pathname === '/build';
   const isAuthenticated = !!user;
+  const isPublicFormPath = /^\/forms\/[^/]+$/.test(location.pathname);
   const showSidebarToggle = isAuthenticated && ![
     '/',
     '/account'
-  ].includes(location.pathname) && !location.pathname.startsWith('/forms/');
+  ].includes(location.pathname) && !isPublicFormPath;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAccountClick }) => {
 
   const handleBuildClick = () => {
     setMenuOpen(false);
-    navigate('/build');
+    navigate('/build', { state: { createNew: Date.now() } });
   };
 
   const getInitial = () => (user?.name || user?.email || 'U').trim().charAt(0).toUpperCase();
@@ -90,15 +90,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onAccountClick }) => {
       </div>
 
       <div className="navbar-right">
-        {user && (
-          <button
-            onClick={handleBuildClick}
-            className={`navbar-analyze-link ${isBuildPage ? 'active' : ''}`}
-          >
-            إنشاء
-          </button>
-        )}
-
       {user && (
         <div className="user-menu" ref={menuRef}>
           <button

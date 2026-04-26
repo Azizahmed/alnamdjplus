@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+﻿import React, { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 
 interface ConditionModalProps {
@@ -263,7 +263,7 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
                       fontSize: '14px',
                       fontWeight: '500',
                       color: '#ffffff',
-                      background: '#b45309',
+                      background: '#0E7C86',
                       border: 'none',
                       borderRadius: '6px',
                       cursor: 'pointer'

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface QuestionProps {
   question: any;
@@ -14,7 +14,7 @@ export const Button: React.FC<QuestionProps> = ({
   value,
   onChange,
   disabled = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;

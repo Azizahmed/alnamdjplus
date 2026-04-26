@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+﻿import React, { Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 
 interface ComponentLibraryProps {
@@ -71,9 +71,9 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({ onAdd, disab
           }}
           onMouseEnter={(e) => {
             if (!disabled) {
-              e.currentTarget.style.background = '#fffbeb';
-              e.currentTarget.style.borderColor = '#fef3c7';
-              e.currentTarget.style.color = '#b45309';
+              e.currentTarget.style.background = '#E7F5F4';
+              e.currentTarget.style.borderColor = '#D9E4E1';
+              e.currentTarget.style.color = '#0E7C86';
             }
           }}
           onMouseLeave={(e) => {
@@ -143,8 +143,8 @@ export const ComponentLibrary: React.FC<ComponentLibraryProps> = ({ onAdd, disab
                       width: '100%',
                       padding: '10px 12px',
                       fontSize: '14px',
-                      color: active ? '#b45309' : '#374151',
-                      background: active ? '#fffbeb' : 'transparent',
+                      color: active ? '#0E7C86' : '#374151',
+                      background: active ? '#E7F5F4' : 'transparent',
                       border: 'none',
                       borderRadius: '4px',
                       cursor: disabled ? 'not-allowed' : 'pointer',

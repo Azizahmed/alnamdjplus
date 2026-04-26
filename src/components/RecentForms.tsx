@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -111,7 +111,7 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
         style={{
           background: 'none',
           border: 'none',
-          color: '#b45309',
+          color: '#0E7C86',
           cursor: 'pointer',
           fontSize: '16px',
           fontWeight: 500,
@@ -121,11 +121,11 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          backgroundColor: isOpen ? '#fffbeb' : 'transparent'
+          backgroundColor: isOpen ? '#E7F5F4' : 'transparent'
         }}
         onMouseOver={(e) => {
           if (!isOpen) {
-            e.currentTarget.style.backgroundColor = '#fffbeb';
+            e.currentTarget.style.backgroundColor = '#E7F5F4';
           }
         }}
         onMouseOut={(e) => {
@@ -141,7 +141,7 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
         Recent Forms
         {recentForms.length > 0 && (
           <span style={{
-            backgroundColor: '#b45309',
+            backgroundColor: '#0E7C86',
             color: 'white',
             borderRadius: '10px',
             padding: '2px 6px',
@@ -190,7 +190,7 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#b45309',
+                  color: '#0E7C86',
                   cursor: 'pointer',
                   fontSize: '12px',
                   padding: '4px 8px',
@@ -198,7 +198,7 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
                   transition: 'background-color 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fffbeb';
+                  e.currentTarget.style.backgroundColor = '#E7F5F4';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -321,13 +321,13 @@ export const RecentForms: React.FC<RecentFormsProps> = () => {
                     backgroundColor: '#f9fafb',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    color: '#b45309',
+                    color: '#0E7C86',
                     fontSize: '13px',
                     fontWeight: 600,
                     transition: 'background-color 0.2s'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fffbeb';
+                    e.currentTarget.style.backgroundColor = '#E7F5F4';
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.backgroundColor = '#f9fafb';

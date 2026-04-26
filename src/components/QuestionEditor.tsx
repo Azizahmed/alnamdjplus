@@ -111,7 +111,11 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative" style={{ zIndex: 10000 }} onClose={onClose}>
+      <Dialog
+        as="div"
+        style={{ position: 'relative', zIndex: 20000 }}
+        onClose={onClose}
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -121,10 +125,10 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.4)' }} />
+          <div style={{ position: 'fixed', inset: 0, zIndex: 20000, background: 'rgba(0, 0, 0, 0.4)' }} />
         </Transition.Child>
 
-        <div style={{ position: 'fixed', inset: 0, overflow: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 20001, overflow: 'auto' }}>
           <div style={{ display: 'flex', minHeight: '100%', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
             <Transition.Child
               as={Fragment}
@@ -138,35 +142,44 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
               <Dialog.Panel
                 style={{
                   width: '100%',
-                  maxWidth: '560px',
+                  maxWidth: '720px',
+                  maxHeight: 'calc(100vh - 32px)',
                   background: '#ffffff',
                   borderRadius: '12px',
                   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
               >
                 {/* Tabs */}
                 <div style={{
                   display: 'flex',
-                  borderBottom: '1px solid #e5e7eb'
+                  gap: '10px',
+                  padding: '12px',
+                  borderBottom: '1px solid #e5e7eb',
+                  background: '#F7FAF8',
+                  flexShrink: 0
                 }}>
                   <button
                     onClick={() => setActiveTab('edit')}
                     style={{
                       flex: 1,
-                      padding: '16px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      color: activeTab === 'edit' ? '#b45309' : '#6b7280',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: activeTab === 'edit' ? '2px solid #b45309' : '2px solid transparent',
+                      minHeight: '56px',
+                      padding: '14px 18px',
+                      fontSize: '15px',
+                      fontWeight: '800',
+                      color: activeTab === 'edit' ? '#0E7C86' : '#52666B',
+                      background: activeTab === 'edit' ? '#ffffff' : 'transparent',
+                      border: `1px solid ${activeTab === 'edit' ? '#0E7C86' : '#D9E4E1'}`,
+                      borderRadius: '10px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      marginBottom: '-1px'
+                      gap: '10px',
+                      boxShadow: activeTab === 'edit' ? '0 10px 24px rgba(14, 124, 134, 0.12)' : 'none',
+                      transition: 'all 0.18s ease'
                     }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -179,19 +192,21 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     onClick={() => setActiveTab('ai')}
                     style={{
                       flex: 1,
-                      padding: '16px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      color: activeTab === 'ai' ? '#b45309' : '#6b7280',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: activeTab === 'ai' ? '2px solid #b45309' : '2px solid transparent',
+                      minHeight: '56px',
+                      padding: '14px 18px',
+                      fontSize: '15px',
+                      fontWeight: '800',
+                      color: activeTab === 'ai' ? '#0E7C86' : '#52666B',
+                      background: activeTab === 'ai' ? '#ffffff' : 'transparent',
+                      border: `1px solid ${activeTab === 'ai' ? '#0E7C86' : '#D9E4E1'}`,
+                      borderRadius: '10px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      marginBottom: '-1px'
+                      gap: '10px',
+                      boxShadow: activeTab === 'ai' ? '0 10px 24px rgba(14, 124, 134, 0.12)' : 'none',
+                      transition: 'all 0.18s ease'
                     }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -203,7 +218,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                   </button>
                 </div>
 
-                <div style={{ padding: '24px' }}>
+                <div style={{ padding: '24px', overflowY: 'auto', minHeight: 0 }}>
                   {activeTab === 'edit' ? (
                     /* Normal Edit Tab */
                     <div>
@@ -232,7 +247,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             outline: 'none',
                             fontFamily: 'inherit'
                           }}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#b45309'}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#0E7C86'}
                           onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                         />
                       </div>
@@ -263,7 +278,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             fontFamily: 'inherit',
                             resize: 'vertical'
                           }}
-                          onFocus={(e) => e.currentTarget.style.borderColor = '#b45309'}
+                          onFocus={(e) => e.currentTarget.style.borderColor = '#0E7C86'}
                           onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                         />
                       </div>
@@ -352,9 +367,9 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                               style={{
                                 padding: '8px 12px',
                                 fontSize: '14px',
-                                color: '#b45309',
-                                background: '#fffbeb',
-                                border: '1px dashed #fef3c7',
+                                color: '#0E7C86',
+                                background: '#E7F5F4',
+                                border: '1px dashed #D9E4E1',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 marginTop: '4px'
@@ -381,7 +396,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             style={{
                               width: '18px',
                               height: '18px',
-                              accentColor: '#b45309'
+                              accentColor: '#0E7C86'
                             }}
                           />
                           <span style={{ fontSize: '14px', color: '#374151' }}>
@@ -414,7 +429,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             fontSize: '14px',
                             fontWeight: '500',
                             color: '#ffffff',
-                            background: '#b45309',
+                            background: '#0E7C86',
                             border: 'none',
                             borderRadius: '8px',
                             cursor: 'pointer'
@@ -488,7 +503,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                           resize: 'vertical',
                           marginBottom: '16px'
                         }}
-                        onFocus={(e) => e.currentTarget.style.borderColor = '#b45309'}
+                        onFocus={(e) => e.currentTarget.style.borderColor = '#0E7C86'}
                         onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && e.ctrlKey && aiPrompt.trim() && !isApplying) {
@@ -523,7 +538,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                             fontSize: '14px',
                             fontWeight: '500',
                             color: '#ffffff',
-                            background: (!aiPrompt.trim() || isApplying) ? '#d1d5db' : '#b45309',
+                            background: (!aiPrompt.trim() || isApplying) ? '#d1d5db' : '#0E7C86',
                             border: 'none',
                             borderRadius: '8px',
                             cursor: (!aiPrompt.trim() || isApplying) ? 'not-allowed' : 'pointer',

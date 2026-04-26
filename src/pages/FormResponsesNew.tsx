@@ -64,8 +64,8 @@ export const FormResponsesNew: React.FC = () => {
     try {
       const { data, error } = await api.forms.get(formId!);
       if (error) throw new Error('Failed to load form');
-      if (data?.[0]) {
-        setFormData(data[0]);
+      if (data) {
+        setFormData(data);
       }
     } catch (err: any) {
       setError(err.message);
@@ -141,7 +141,7 @@ export const FormResponsesNew: React.FC = () => {
                   title={`Download ${label}`}
                   style={{
                     padding: '6px 12px',
-                    background: '#b45309',
+                    background: '#0E7C86',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -152,17 +152,17 @@ export const FormResponsesNew: React.FC = () => {
                     alignItems: 'center',
                     gap: '6px',
                     transition: 'all 0.15s',
-                    boxShadow: '0 1px 3px rgba(147,51,234,0.3)'
+                    boxShadow: '0 1px 3px rgba(14,124,134,0.3)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#92400e';
+                    e.currentTarget.style.background = '#123A3F';
                     e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(147,51,234,0.4)';
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(14,124,134,0.4)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#b45309';
+                    e.currentTarget.style.background = '#0E7C86';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(147,51,234,0.3)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(14,124,134,0.3)';
                   }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -194,7 +194,7 @@ export const FormResponsesNew: React.FC = () => {
           title="Download file"
           style={{
             padding: '6px 12px',
-            background: '#b45309',
+            background: '#0E7C86',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
@@ -205,17 +205,17 @@ export const FormResponsesNew: React.FC = () => {
             alignItems: 'center',
             gap: '6px',
             transition: 'all 0.15s',
-            boxShadow: '0 1px 3px rgba(147,51,234,0.3)'
+            boxShadow: '0 1px 3px rgba(14,124,134,0.3)'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#92400e';
+            e.currentTarget.style.background = '#123A3F';
             e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = '0 4px 8px rgba(147,51,234,0.4)';
+            e.currentTarget.style.boxShadow = '0 4px 8px rgba(14,124,134,0.4)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#b45309';
+            e.currentTarget.style.background = '#0E7C86';
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(147,51,234,0.3)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(14,124,134,0.3)';
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -266,6 +266,21 @@ export const FormResponsesNew: React.FC = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedResponses = filteredResponses.slice(startIndex, endIndex);
 
+  const emptyStateCopy = {
+    all: {
+      title: 'لا توجد ردود بعد',
+      description: 'انشر النموذج لبدء جمع الردود'
+    },
+    complete: {
+      title: 'لا توجد ردود مكتملة',
+      description: 'لا توجد ردود مكتملة لهذا النموذج'
+    },
+    partial: {
+      title: 'لا توجد ردود جزئية',
+      description: 'لا توجد ردود جزئية لهذا النموذج'
+    }
+  }[activeTab];
+
   if (loading && !formData) {
     return (
       <div style={{
@@ -279,7 +294,7 @@ export const FormResponsesNew: React.FC = () => {
           width: '48px',
           height: '48px',
           border: '3px solid #f3f4f6',
-          borderTop: '3px solid #b45309',
+          borderTop: '3px solid #0E7C86',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />
@@ -326,7 +341,7 @@ export const FormResponsesNew: React.FC = () => {
             onClick={() => navigate(-1)}
             style={{
               padding: '12px 28px',
-              background: '#b45309',
+              background: '#0E7C86',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -338,7 +353,7 @@ export const FormResponsesNew: React.FC = () => {
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            Go Back
+            رجوع
           </button>
         </div>
       </div>
@@ -352,7 +367,8 @@ export const FormResponsesNew: React.FC = () => {
       display: 'flex',
       overflow: 'hidden',
       background: '#fafafa',
-      minHeight: 0
+      minHeight: 0,
+      direction: 'ltr'
     }}>
       {/* Collapsed Chat Toggle */}
       {!showChat && (
@@ -360,9 +376,9 @@ export const FormResponsesNew: React.FC = () => {
           onClick={handleOpenChat}
           style={{
             width: '44px',
-            background: 'linear-gradient(180deg, #fffbeb 0%, #ffffff 100%)',
+            background: 'linear-gradient(180deg, #E7F5F4 0%, #ffffff 100%)',
             border: 'none',
-            borderInlineStart: '1px solid #e5e7eb',
+            borderInlineEnd: '1px solid #e5e7eb',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -373,15 +389,15 @@ export const FormResponsesNew: React.FC = () => {
             transition: 'all 0.15s',
             flexShrink: 0
           }}
-          title="Open chat panel"
-          onMouseEnter={(e) => e.currentTarget.style.background = '#fffbeb'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(180deg, #fffbeb 0%, #ffffff 100%)'}
+          title="فتح مساعد النموذج"
+          onMouseEnter={(e) => e.currentTarget.style.background = '#E7F5F4'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(180deg, #E7F5F4 0%, #ffffff 100%)'}
         >
           <div style={{
             width: '32px',
             height: '32px',
             borderRadius: '8px',
-            background: '#b45309',
+            background: '#0E7C86',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -395,10 +411,10 @@ export const FormResponsesNew: React.FC = () => {
             textOrientation: 'mixed',
             fontSize: '11px',
             fontWeight: '600',
-            color: '#b45309',
+            color: '#0E7C86',
             letterSpacing: '0.05em'
           }}>
-            CHAT
+            المساعد
           </span>
         </button>
       )}
@@ -410,7 +426,8 @@ export const FormResponsesNew: React.FC = () => {
           isOpen={true}
           onClose={() => setShowChat(false)}
           mode="responses"
-          accentColor="#b45309"
+          position="left"
+          accentColor="#0E7C86"
           inline={true}
           width={400}
         />
@@ -421,7 +438,8 @@ export const FormResponsesNew: React.FC = () => {
         flex: 1,
         minHeight: 0, // Critical for flex children to enable scroll
         overflowY: 'auto',
-        padding: '24px'
+        padding: '24px',
+        direction: 'rtl'
       }}>
         <div style={{
           maxWidth: '1600px',
@@ -432,9 +450,10 @@ export const FormResponsesNew: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            direction: 'ltr'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', direction: 'ltr' }}>
               <button
                 onClick={() => navigate(-1)}
                 style={{
@@ -463,7 +482,7 @@ export const FormResponsesNew: React.FC = () => {
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div>
+              <div style={{ direction: 'rtl', textAlign: 'right' }}>
                 <h1 style={{
                   fontSize: '28px',
                   fontWeight: '700',
@@ -494,7 +513,7 @@ export const FormResponsesNew: React.FC = () => {
                 borderRadius: '8px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
-                {totalCount} {totalCount === 1 ? 'Response' : 'Responses'}
+                {totalCount} ردود
               </div>
               
               <button
@@ -504,7 +523,7 @@ export const FormResponsesNew: React.FC = () => {
                 fontSize: '14px',
                 fontWeight: '600',
                 color: 'white',
-                background: '#b45309',
+                background: '#0E7C86',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -512,11 +531,11 @@ export const FormResponsesNew: React.FC = () => {
                 transition: 'all 0.15s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#92400e';
+                e.currentTarget.style.background = '#123A3F';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#b45309';
+                e.currentTarget.style.background = '#0E7C86';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
@@ -561,9 +580,9 @@ export const FormResponsesNew: React.FC = () => {
           gap: '4px'
         }}>
           {[
-            { key: 'all' as const, label: 'All', count: responses.length },
-            { key: 'complete' as const, label: 'Complete', count: responses.filter(r => r.status === 'complete').length },
-            { key: 'partial' as const, label: 'Partial', count: responses.filter(r => r.status === 'partial' || r.status === 'in_progress').length }
+            { key: 'all' as const, label: 'الكل', count: responses.length },
+            { key: 'complete' as const, label: 'مكتملة', count: responses.filter(r => r.status === 'complete').length },
+            { key: 'partial' as const, label: 'جزئية', count: responses.filter(r => r.status === 'partial' || r.status === 'in_progress').length }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -575,8 +594,8 @@ export const FormResponsesNew: React.FC = () => {
                 padding: '8px 16px',
                 fontSize: '14px',
                 fontWeight: '600',
-                color: activeTab === tab.key ? '#b45309' : '#6b7280',
-                background: activeTab === tab.key ? '#fffbeb' : 'transparent',
+                color: activeTab === tab.key ? '#0E7C86' : '#6b7280',
+                background: activeTab === tab.key ? '#E7F5F4' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -602,7 +621,7 @@ export const FormResponsesNew: React.FC = () => {
                 fontWeight: '700',
                 padding: '2px 8px',
                 borderRadius: '12px',
-                background: activeTab === tab.key ? '#b45309' : '#e5e7eb',
+                background: activeTab === tab.key ? '#0E7C86' : '#e5e7eb',
                 color: activeTab === tab.key ? 'white' : '#6b7280'
               }}>
                 {tab.count}
@@ -633,15 +652,13 @@ export const FormResponsesNew: React.FC = () => {
               color: '#111827',
               marginBottom: '8px'
             }}>
-              {activeTab === 'all' ? 'No Responses Yet' : `No ${activeTab === 'complete' ? 'Complete' : 'Partial'} Responses`}
+              {emptyStateCopy.title}
             </h3>
             <p style={{
               fontSize: '14px',
               color: '#6b7280'
             }}>
-              {activeTab === 'all' 
-                ? 'Publish your form to start collecting responses' 
-                : `There are no ${activeTab} responses for this form`}
+              {emptyStateCopy.description}
             </p>
           </div>
         ) : (
@@ -676,7 +693,7 @@ export const FormResponsesNew: React.FC = () => {
                       zIndex: 10,
                       borderInlineStart: '1px solid #e5e7eb'
                     }}>
-                      Submitted at
+                      تاريخ الإرسال
                     </th>
                     {formData?.questions.map((question) => (
                       <th
@@ -724,7 +741,7 @@ export const FormResponsesNew: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {activeTab === 'all' && response.status !== 'complete' && (
                             <span
-                              title="Partial response"
+                              title="رد جزئي"
                               style={{
                                 width: '6px',
                                 height: '6px',
@@ -788,7 +805,7 @@ export const FormResponsesNew: React.FC = () => {
                   color: '#6b7280',
                   fontWeight: '500'
                 }}>
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredResponses.length)} of {filteredResponses.length}
+                  عرض {startIndex + 1}-{Math.min(endIndex, filteredResponses.length)} من {filteredResponses.length}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -807,8 +824,8 @@ export const FormResponsesNew: React.FC = () => {
                     }}
                     onMouseEnter={(e) => {
                       if (currentPage !== 1) {
-                        e.currentTarget.style.borderColor = '#b45309';
-                        e.currentTarget.style.color = '#b45309';
+                        e.currentTarget.style.borderColor = '#0E7C86';
+                        e.currentTarget.style.color = '#0E7C86';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -818,7 +835,7 @@ export const FormResponsesNew: React.FC = () => {
                       }
                     }}
                   >
-                    ← Previous
+                    السابق
                   </button>
 
                   <div style={{ display: 'flex', gap: '4px' }}>
@@ -844,17 +861,17 @@ export const FormResponsesNew: React.FC = () => {
                             fontSize: '14px',
                             fontWeight: '600',
                             color: currentPage === pageNum ? 'white' : '#374151',
-                            background: currentPage === pageNum ? '#b45309' : 'white',
+                            background: currentPage === pageNum ? '#0E7C86' : 'white',
                             border: '1px solid',
-                            borderColor: currentPage === pageNum ? '#b45309' : '#e5e7eb',
+                            borderColor: currentPage === pageNum ? '#0E7C86' : '#e5e7eb',
                             borderRadius: '8px',
                             cursor: 'pointer',
                             transition: 'all 0.15s'
                           }}
                           onMouseEnter={(e) => {
                             if (currentPage !== pageNum) {
-                              e.currentTarget.style.borderColor = '#b45309';
-                              e.currentTarget.style.color = '#b45309';
+                              e.currentTarget.style.borderColor = '#0E7C86';
+                              e.currentTarget.style.color = '#0E7C86';
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -886,8 +903,8 @@ export const FormResponsesNew: React.FC = () => {
                     }}
                     onMouseEnter={(e) => {
                       if (currentPage !== totalPages) {
-                        e.currentTarget.style.borderColor = '#b45309';
-                        e.currentTarget.style.color = '#b45309';
+                        e.currentTarget.style.borderColor = '#0E7C86';
+                        e.currentTarget.style.color = '#0E7C86';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -897,7 +914,7 @@ export const FormResponsesNew: React.FC = () => {
                       }
                     }}
                   >
-                    Next →
+                    التالي
                   </button>
                 </div>
               </div>
@@ -952,7 +969,7 @@ export const FormResponsesNew: React.FC = () => {
                   margin: '0 0 8px 0',
                   letterSpacing: '-0.01em'
                 }}>
-                  Response #{selectedResponse.id}
+                  الرد #{selectedResponse.id}
                 </h2>
                 <div style={{
                   fontSize: '13px',
@@ -1007,12 +1024,12 @@ export const FormResponsesNew: React.FC = () => {
                   <div style={{
                     fontSize: '13px',
                     fontWeight: '700',
-                    color: '#b45309',
+                    color: '#0E7C86',
                     marginBottom: '8px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Question {index + 1}
+                    السؤال {index + 1}
                   </div>
                   <div style={{
                     fontSize: '15px',

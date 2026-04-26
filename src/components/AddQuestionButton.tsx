@@ -49,7 +49,7 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
           width: '48px',
           height: '48px',
           borderRadius: '50%',
-          background: '#b45309',
+          background: '#0E7C86',
           border: 'none',
           color: '#ffffff',
           fontSize: '24px',
@@ -64,14 +64,14 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
         }}
         onMouseEnter={(e) => {
           if (!disabled) {
-            e.currentTarget.style.background = '#92400e';
+            e.currentTarget.style.background = '#123A3F';
             e.currentTarget.style.transform = 'scale(1.1)';
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.4)';
           }
         }}
         onMouseLeave={(e) => {
           if (!disabled) {
-            e.currentTarget.style.background = '#b45309';
+            e.currentTarget.style.background = '#0E7C86';
             e.currentTarget.style.transform = 'scale(1)';
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(147, 51, 234, 0.3)';
           }
@@ -156,7 +156,7 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
                             outline: 'none'
                           }}
                           onFocus={(e) => {
-                            e.currentTarget.style.borderColor = '#b45309';
+                            e.currentTarget.style.borderColor = '#0E7C86';
                             e.currentTarget.style.boxShadow = '0 0 0 3px rgba(147, 51, 234, 0.1)';
                           }}
                           onBlur={(e) => {
@@ -221,7 +221,7 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
                                     <span style={{ fontSize: '20px' }}>{type.icon}</span>
                                     <span style={{ 
                                       flex: 1,
-                                      color: active ? '#b45309' : '#1f2937'
+                                      color: active ? '#0E7C86' : '#1f2937'
                                     }}>{type.name}</span>
                                     {selected && (
                                       <svg
@@ -229,7 +229,7 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
                                         height="16"
                                         viewBox="0 0 24 24"
                                         fill="none"
-                                        stroke="#b45309"
+                                        stroke="#0E7C86"
                                         strokeWidth="2"
                                       >
                                         <polyline points="20 6 9 17 4 12" />
@@ -270,7 +270,7 @@ export const AddQuestionButton: React.FC<AddQuestionButtonProps> = ({ onAdd, dis
                         fontSize: '14px',
                         fontWeight: '500',
                         color: '#ffffff',
-                        background: '#b45309',
+                        background: '#0E7C86',
                         border: 'none',
                         borderRadius: '6px',
                         cursor: 'pointer'

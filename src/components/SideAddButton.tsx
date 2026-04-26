@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface SideAddButtonProps {
   onAdd: () => void;
@@ -32,16 +32,16 @@ export const SideAddButton: React.FC<SideAddButtonProps> = ({
           width: '28px',
           height: '28px',
           borderRadius: '50%',
-          background: isHovered ? '#4A4540' : 'rgba(255, 255, 255, 0.8)',
-          border: `1px solid ${isHovered ? '#4A4540' : '#D4C5B0'}`,
-          color: isHovered ? '#ffffff' : '#9B8B7A',
+          background: isHovered ? '#123A3F' : 'rgba(255, 255, 255, 0.8)',
+          border: `1px solid ${isHovered ? '#123A3F' : '#D9E4E1'}`,
+          color: isHovered ? '#ffffff' : '#6AA9AF',
           fontSize: '18px',
           fontWeight: '300',
           cursor: disabled ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: isHovered ? '0 2px 8px rgba(74, 69, 64, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
+          boxShadow: isHovered ? '0 2px 8px rgba(18, 58, 63, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
           transition: 'all 0.2s',
           opacity: disabled ? 0.4 : (isHovered ? 1 : 0.6)
         }}

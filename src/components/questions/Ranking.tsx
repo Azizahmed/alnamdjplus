@@ -16,7 +16,7 @@ export const Ranking: React.FC<QuestionProps> = ({
   onChange,
   disabled = false,
   hideLabel = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;

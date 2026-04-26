@@ -59,7 +59,7 @@ export const BarChart: React.FC<BarChartProps> = ({ data, height = 360 }) => {
             fontWeight: '600',
             marginBottom: '4px'
           }}
-          cursor={{ fill: 'rgba(74, 69, 64, 0.05)' }}
+          cursor={{ fill: 'rgba(18, 58, 63, 0.05)' }}
         />
         <Legend 
           wrapperStyle={{ 
@@ -72,14 +72,14 @@ export const BarChart: React.FC<BarChartProps> = ({ data, height = 360 }) => {
         />
         <Bar
           dataKey="submissions"
-          fill="#9B8B7A"
+          fill="#6AA9AF"
           name="الردود"
           radius={[8, 8, 0, 0]}
           maxBarSize={60}
         />
         <Bar
           dataKey="views"
-          fill="#D4C5B0"
+          fill="#D9E4E1"
           name="المشاهدات"
           radius={[8, 8, 0, 0]}
           maxBarSize={60}

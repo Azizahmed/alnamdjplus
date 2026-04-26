@@ -1,14 +1,64 @@
 import { createClient } from 'https://esm.sh/@insforge/sdk@latest';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL') || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get('Origin') || '';
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allowOrigin = allowedOrigins.includes(origin) || isLocalhost ? origin : (allowedOrigins[0] || 'null');
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+};
+
+const createChatCompletion = async (messages: any[], maxTokens: number) => {
+  const apiKey = Deno.env.get('OPENROUTER_API_KEY');
+  const model = Deno.env.get('OPENROUTER_MODEL');
+
+  if (!apiKey) {
+    throw new Error('Missing OPENROUTER_API_KEY secret');
+  }
+  if (!model) {
+    throw new Error('Missing OPENROUTER_MODEL secret');
+  }
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': Deno.env.get('APP_URL') ?? 'https://alnamdjplus.app',
+      'X-Title': 'AlnamdjPlus',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    }),
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error?.message || body?.message || `OpenRouter request failed (${response.status})`);
+  }
+
+  return body;
 };
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: getCorsHeaders(req) });
   }
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -96,7 +146,7 @@ Always respond in the same language as the user's message. If the user writes in
 
     await insforge.database
       .from('chat_messages')
-      .insert({ form_id: formId, user_id: userData.user.id, role: 'user', content: message });
+      .insert([{ form_id: formId, user_id: userData.user.id, role: 'user', content: message }]);
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -104,25 +154,16 @@ Always respond in the same language as the user's message. If the user writes in
       { role: 'user', content: message },
     ];
 
-    const aiResponse = await insforge.ai.chat({
-      messages,
-      model: 'openai/gpt-4o-mini',
-      temperature: 0.7,
-      max_tokens: 2000,
-    });
+    const aiResponse = await createChatCompletion(messages, 2000);
 
-    if (aiResponse.error) {
-      throw new Error(aiResponse.error.message);
-    }
-
-    const assistantMessage = aiResponse.data?.choices?.[0]?.message?.content;
+    const assistantMessage = aiResponse.choices?.[0]?.message?.content;
     if (!assistantMessage) {
       throw new Error('No response from AI');
     }
 
     await insforge.database
       .from('chat_messages')
-      .insert({ form_id: formId, user_id: userData.user.id, role: 'assistant', content: assistantMessage });
+      .insert([{ form_id: formId, user_id: userData.user.id, role: 'assistant', content: assistantMessage }]);
 
     let action = null;
     try {
@@ -142,7 +183,7 @@ Always respond in the same language as the user's message. If the user writes in
           const maxOrder = Math.max(...(formData.form_questions?.map((q: any) => q.order) || [-1]));
           await insforge.database
             .from('form_questions')
-            .insert({
+            .insert([{
               form_id: formId,
               type: action.data.type,
               label: action.data.label,
@@ -150,7 +191,7 @@ Always respond in the same language as the user's message. If the user writes in
               required: action.data.required || false,
               order: maxOrder + 1,
               settings: action.data.settings || {},
-            });
+            }]);
           break;
         }
         case 'edit_question': {
@@ -163,12 +204,12 @@ Always respond in the same language as the user's message. If the user writes in
         case 'add_rule': {
           await insforge.database
             .from('conditional_rules')
-            .insert({
+            .insert([{
               question_id: action.data.source_question_id,
               target_question_id: action.data.target_question_id,
               condition: action.data.condition,
               action: action.data.action,
-            });
+            }]);
           break;
         }
       }

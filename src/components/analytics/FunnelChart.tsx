@@ -78,8 +78,8 @@ export const FunnelChart: React.FC<FunnelChartProps> = ({ stages, height = 400 }
                     height: '100%',
                     width: `${stage.percentage}%`,
                     background: isLast
-                      ? 'linear-gradient(90deg, #9B8B7A 0%, #7A6A59 100%)'
-                      : 'linear-gradient(90deg, #4A4540 0%, #6A6560 100%)',
+                      ? 'linear-gradient(90deg, #6AA9AF 0%, #7A6A59 100%)'
+                      : 'linear-gradient(90deg, #123A3F 0%, #6A6560 100%)',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../services/api';
@@ -22,7 +22,7 @@ interface FormChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onFormUpdated?: () => void;
-  position?: 'right' | 'bottom';
+  position?: 'left' | 'right' | 'bottom';
   width?: number;
   accentColor?: string;
   mode?: 'builder' | 'analytics' | 'responses';
@@ -195,7 +195,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     height: '100%',
     minHeight: 0, // Critical for flex children to enable scroll
     background: '#ffffff',
-    borderInlineStart: '1px solid #e5e7eb',
+    borderInlineStart: position === 'right' ? '1px solid #e5e7eb' : undefined,
+    borderInlineEnd: position === 'left' ? '1px solid #e5e7eb' : undefined,
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
@@ -244,7 +245,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
   return (
     <div ref={panelRef} style={panelStyle}>
       {/* Resize handle */}
-      {position === 'right' && (
+      {(position === 'left' || position === 'right') && (
         <div
           onMouseDown={(e) => {
             e.preventDefault();
@@ -295,7 +296,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: '#fffbeb',
+        background: '#E7F5F4',
         flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -419,8 +420,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
             <div style={{
               padding: '12px 16px',
               borderRadius: '10px',
-              background: msg.role === 'user' ? '#fffbeb' : '#f9fafb',
-              border: `1px solid ${msg.role === 'user' ? '#fef3c7' : '#e5e7eb'}`
+              background: msg.role === 'user' ? '#E7F5F4' : '#f9fafb',
+              border: `1px solid ${msg.role === 'user' ? '#D9E4E1' : '#e5e7eb'}`
             }}>
               <div style={{
                 fontSize: '11px',

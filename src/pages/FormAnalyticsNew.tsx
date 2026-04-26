@@ -76,8 +76,8 @@ export const FormAnalyticsNew: React.FC = () => {
     try {
       const { data, error } = await api.forms.get(formId!);
       if (error) throw new Error('Failed to load form');
-      if (data?.[0]) {
-        setFormData(data[0]);
+      if (data) {
+        setFormData(data);
       }
     } catch (err: any) {
       setError(err.message);
@@ -136,7 +136,7 @@ export const FormAnalyticsNew: React.FC = () => {
           width: '48px',
           height: '48px',
           border: '3px solid #f3f4f6',
-          borderTop: '3px solid #b45309',
+          borderTop: '3px solid #0E7C86',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />
@@ -183,7 +183,7 @@ export const FormAnalyticsNew: React.FC = () => {
             onClick={() => navigate(-1)}
             style={{
               padding: '12px 28px',
-              background: '#b45309',
+              background: '#0E7C86',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -299,46 +299,46 @@ export const FormAnalyticsNew: React.FC = () => {
         {/* Stats Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)',
+            background: 'linear-gradient(135deg, #E7F5F4 0%, #ffffff 100%)',
             padding: '16px',
             borderRadius: '12px',
-            border: '1px solid #fef3c7',
+            border: '1px solid #D9E4E1',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
           }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px', fontWeight: '600' }}>
               إجمالي الردود
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#b45309' }}>
+            <div style={{ fontSize: '28px', fontWeight: '700', color: '#0E7C86' }}>
               {(summary?.total_responses || 0).toLocaleString()}
             </div>
           </div>
 
           <div style={{
-            background: 'linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)',
+            background: 'linear-gradient(135deg, #E7F5F4 0%, #ffffff 100%)',
             padding: '16px',
             borderRadius: '12px',
-            border: '1px solid #fef3c7',
+            border: '1px solid #D9E4E1',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
           }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px', fontWeight: '600' }}>
               إجمالي المشاهدات
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#b45309' }}>
+            <div style={{ fontSize: '28px', fontWeight: '700', color: '#0E7C86' }}>
               {(funnel?.total_views || 0).toLocaleString()}
             </div>
           </div>
 
           <div style={{
-            background: 'linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)',
+            background: 'linear-gradient(135deg, #E7F5F4 0%, #ffffff 100%)',
             padding: '16px',
             borderRadius: '12px',
-            border: '1px solid #fef3c7',
+            border: '1px solid #D9E4E1',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
           }}>
             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px', fontWeight: '600' }}>
               معدل التحويل
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#b45309' }}>
+            <div style={{ fontSize: '28px', fontWeight: '700', color: '#0E7C86' }}>
               {conversionRate.toFixed(1)}%
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+﻿import React, { Fragment } from 'react';
 import { Popover, Transition } from '@headlessui/react';
 import { useI18n } from '../i18n';
 import { buildPagePresets, brandTokens } from '../theme/brand';
@@ -225,7 +225,7 @@ export const GlobalColorPicker: React.FC<GlobalColorPickerProps> = ({ colors, on
 
               <ColorPicker
                 label={t.boldTextColor}
-                value={colors.boldText || '#b45309'}
+                value={colors.boldText || '#0E7C86'}
                 onChange={(boldText) => onChange({ ...colors, boldText })}
               />
 
@@ -330,7 +330,7 @@ export const QuestionColorPicker: React.FC<QuestionColorPickerProps> = ({
             fontSize: '14px',
             fontWeight: '500',
             color: '#ffffff',
-            background: '#b45309',
+            background: '#0E7C86',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer'

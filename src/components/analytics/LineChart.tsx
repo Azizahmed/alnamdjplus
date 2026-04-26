@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 
 interface DataPoint {
   date: string;
@@ -68,8 +68,8 @@ export const LineChart: React.FC<LineChartProps> = ({ data, height = 300 }) => {
         {/* Grid lines */}
         <defs>
           <linearGradient id="viewsGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#b45309" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
+            <stop offset="0%" stopColor="#0E7C86" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#0E7C86" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="submissionsGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
@@ -111,7 +111,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, height = 300 }) => {
         <path
           d={paths.views}
           fill="none"
-          stroke="#b45309"
+          stroke="#0E7C86"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -135,7 +135,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, height = 300 }) => {
           
           return (
             <g key={i}>
-              <circle cx={x} cy={yViews} r="4" fill="#b45309" />
+              <circle cx={x} cy={yViews} r="4" fill="#0E7C86" />
               <circle cx={x} cy={ySubmissions} r="4" fill="#10b981" />
             </g>
           );
@@ -173,7 +173,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, height = 300 }) => {
             width: '12px',
             height: '12px',
             borderRadius: '50%',
-            background: '#b45309'
+            background: '#0E7C86'
           }} />
           <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>Views</span>
         </div>

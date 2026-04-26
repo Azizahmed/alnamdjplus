@@ -17,6 +17,7 @@ export const PublicForm: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [thankYouMessage, setThankYouMessage] = useState('');
+  const [website, setWebsite] = useState('');
   const [sessionId] = useState(() => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   const [utmParams] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -32,7 +33,7 @@ export const PublicForm: React.FC = () => {
   // Extract colors from form settings
   const backgroundColor = formData?.settings?.background_color || '#ffffff';
   const textColor = formData?.settings?.text_color || '#1f2937';
-  const accentColor = formData?.settings?.accent_color || '#b45309';
+  const accentColor = formData?.settings?.accent_color || '#0E7C86';
   const boldTextColor = formData?.settings?.bold_text_color || accentColor;
   
   // In review mode, use grayscale colors
@@ -65,7 +66,9 @@ export const PublicForm: React.FC = () => {
       setFormData(form);
       setLoading(false);
       
-      trackEvent('form_viewed');
+      await api.publicForms.trackEvent(form.id, 'view', {
+        session_id: sessionId,
+      });
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -75,7 +78,16 @@ export const PublicForm: React.FC = () => {
   const trackEvent = async (eventType: string, questionId?: string, timeSpent?: number) => {
     try {
       const formId = formData?.id || token;
-      await api.publicForms.trackEvent(formId, eventType, {
+      const eventMap: Record<string, string> = {
+        form_viewed: 'view',
+        form_started: 'start',
+        form_submitted_complete: 'complete',
+        form_abandoned: 'abandon',
+      };
+      const normalizedEventType = eventMap[eventType];
+      if (!normalizedEventType) return;
+
+      await api.publicForms.trackEvent(formId, normalizedEventType, {
         session_id: sessionId,
         question_id: questionId,
         time_spent: timeSpent
@@ -158,6 +170,7 @@ export const PublicForm: React.FC = () => {
           session_id: sessionId,
           form_version: formData?.version,
           status: 'draft',
+          website,
           ...utmParams
         });
       } catch (err) {
@@ -234,6 +247,7 @@ export const PublicForm: React.FC = () => {
 
       const { data, error: submitError } = await api.responses.submit(token!, answerArray, {
         session_id: sessionId,
+        website,
         ...utmParams
       });
 
@@ -401,9 +415,9 @@ export const PublicForm: React.FC = () => {
         </button>
       )}
 
-      {/* Floating Alnamodj Branding Widget */}
+      {/* Floating AlnamdjPlus Branding Widget */}
       <a
-        href="https://alnamodj.app"
+        href="https://alnamdjplus.app"
         target="_blank"
         rel="noopener noreferrer"
         style={{
@@ -437,7 +451,7 @@ export const PublicForm: React.FC = () => {
           whiteSpace: 'nowrap',
           letterSpacing: '-0.005em'
         }}>
-          made with <span style={{ color: displayAccentColor, fontWeight: '600' }}>Alnamodj</span>
+          made with <span style={{ color: displayAccentColor, fontWeight: '600' }}>AlnamdjPlus</span>
         </span>
       </a>
 
@@ -490,6 +504,23 @@ export const PublicForm: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="website"
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: '-10000px',
+              width: '1px',
+              height: '1px',
+              opacity: 0,
+              pointerEvents: 'none'
+            }}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {formData.questions
               ?.filter((q: any) => visibleQuestionIds.has(q.id))
@@ -593,7 +624,7 @@ export const PublicForm: React.FC = () => {
               transition: 'background 0.2s'
             }}
           >
-            {submitting ? 'Submitting...' : (formData.settings?.submit_button_text || 'Submit')}
+            {submitting ? 'جاري الإرسال...' : (formData.settings?.submit_button_text || 'إرسال')}
           </button>
         </form>
 
@@ -606,7 +637,7 @@ export const PublicForm: React.FC = () => {
         }}>
           Made using{' '}
           <a
-            href="https://alnamodj.app"
+            href="https://alnamdjplus.app"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -621,7 +652,7 @@ export const PublicForm: React.FC = () => {
               e.currentTarget.style.textDecoration = 'none';
             }}
           >
-            Alnamodj
+            AlnamdjPlus
           </a>
         </div>
       </div>

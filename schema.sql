@@ -204,7 +204,11 @@ CREATE POLICY "Form owners can view responses" ON form_responses
   );
 
 CREATE POLICY "Anyone can submit responses" ON form_responses
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public_forms WHERE public_forms.form_id = form_responses.form_id
+    )
+  );
 
 -- RLS Policies for response_answers
 CREATE POLICY "Form owners can view answers" ON response_answers
@@ -217,7 +221,16 @@ CREATE POLICY "Form owners can view answers" ON response_answers
   );
 
 CREATE POLICY "Anyone can submit answers" ON response_answers
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM form_responses
+      JOIN public_forms ON public_forms.form_id = form_responses.form_id
+      JOIN form_questions ON form_questions.form_id = form_responses.form_id
+      WHERE form_responses.id = response_answers.response_id
+        AND form_questions.id = response_answers.question_id
+    )
+  );
 
 -- RLS Policies for form_uploads
 CREATE POLICY "Form owners can view uploads" ON form_uploads
@@ -230,14 +243,41 @@ CREATE POLICY "Form owners can view uploads" ON form_uploads
   );
 
 CREATE POLICY "Anyone can create uploads" ON form_uploads
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM form_responses
+      JOIN public_forms ON public_forms.form_id = form_responses.form_id
+      JOIN form_questions ON form_questions.form_id = form_responses.form_id
+      WHERE form_responses.id = form_uploads.response_id
+        AND form_questions.id = form_uploads.question_id
+    )
+  );
 
 -- RLS Policies for public_forms
 CREATE POLICY "Anyone can view public forms" ON public_forms
   FOR SELECT USING (true);
 
-CREATE POLICY "Form owners can manage public forms" ON public_forms
-  FOR ALL USING (
+CREATE POLICY "Form owners can create public forms" ON public_forms
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM forms WHERE forms.id = public_forms.form_id AND forms.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Form owners can update public forms" ON public_forms
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM forms WHERE forms.id = public_forms.form_id AND forms.user_id = auth.uid()
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM forms WHERE forms.id = public_forms.form_id AND forms.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Form owners can delete public forms" ON public_forms
+  FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM forms WHERE forms.id = public_forms.form_id AND forms.user_id = auth.uid()
     )
@@ -274,7 +314,11 @@ CREATE POLICY "Form owners can view analytics" ON form_analytics_events
   );
 
 CREATE POLICY "Anyone can track analytics events" ON form_analytics_events
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public_forms WHERE public_forms.form_id = form_analytics_events.form_id
+    )
+  );
 
 -- RLS Policies for webhook_configs
 CREATE POLICY "Form owners can view webhooks" ON webhook_configs

@@ -1,5 +1,15 @@
 import { insforge } from '../config';
 
+const normalizeQuestion = (question: any) => ({
+  ...question,
+  type: question.type ?? question.question_type,
+  question_type: question.question_type ?? question.type,
+  label: question.label ?? question.question_text,
+  question_text: question.question_text ?? question.label,
+  order: question.order ?? question.question_order ?? 0,
+  question_order: question.question_order ?? question.order ?? 0,
+});
+
 export const api = {
   auth: {
     getCurrentUser: () => insforge.auth.getCurrentUser(),
@@ -16,11 +26,47 @@ export const api = {
     },
 
     get: async (formId: string) => {
-      return insforge.database.from('forms').select('*, form_questions(*), conditional_rules(*)').eq('id', formId).single();
+      const { data: form, error } = await insforge.database
+        .from('forms')
+        .select('*, form_questions(*)')
+        .eq('id', formId)
+        .single();
+
+      if (error || !form) {
+        return { data: form, error };
+      }
+
+      const questions = (form.form_questions || [])
+        .map(normalizeQuestion)
+        .sort((a: any, b: any) => a.question_order - b.question_order);
+      const questionIds = questions.map((q: any) => q.id);
+
+      let conditionalRules: any[] = [];
+      if (questionIds.length > 0) {
+        const { data: rules, error: rulesError } = await insforge.database
+          .from('conditional_rules')
+          .select('*')
+          .in('question_id', questionIds);
+
+        if (rulesError) {
+          return { data: null, error: rulesError };
+        }
+        conditionalRules = rules || [];
+      }
+
+      return {
+        data: {
+          ...form,
+          form_questions: questions,
+          questions,
+          conditional_rules: conditionalRules,
+        },
+        error: null,
+      };
     },
 
     create: async (data: { user_id: string; title: string; description?: string; settings?: Record<string, any> }) => {
-      return insforge.database.from('forms').insert(data).select();
+      return insforge.database.from('forms').insert([data]).select();
     },
 
     update: async (formId: string, data: Record<string, any>) => {
@@ -32,7 +78,40 @@ export const api = {
     },
 
     publish: async (formId: string, token: string) => {
-      return insforge.database.from('public_forms').insert({ form_id: formId, token, settings: {} }).select();
+      const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+      if (userError || !userData?.user) {
+        return {
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'You must be signed in before publishing a form.',
+          },
+        };
+      }
+
+      const existing = await insforge.database
+        .from('public_forms')
+        .select('*')
+        .eq('form_id', formId)
+        .maybeSingle();
+
+      if (existing.error) {
+        return existing;
+      }
+
+      if (existing.data) {
+        return { data: existing.data, error: null };
+      }
+
+      const inserted = await insforge.database
+        .from('public_forms')
+        .insert([{ form_id: formId, token, settings: {} }])
+        .select();
+
+      return {
+        data: Array.isArray(inserted.data) ? inserted.data[0] : inserted.data,
+        error: inserted.error,
+      };
     },
 
     unpublish: async (formId: string) => {
@@ -46,7 +125,7 @@ export const api = {
     },
 
     create: async (data: { form_id: string; type: string; label: string; description?: string; required?: boolean; order: number; settings?: Record<string, any> }) => {
-      return insforge.database.from('form_questions').insert(data).select();
+      return insforge.database.from('form_questions').insert([data]).select();
     },
 
     update: async (questionId: string, data: Record<string, any>) => {
@@ -71,7 +150,7 @@ export const api = {
     },
 
     create: async (data: { question_id: string; target_question_id: string; condition: Record<string, any>; action: string }) => {
-      return insforge.database.from('conditional_rules').insert(data).select();
+      return insforge.database.from('conditional_rules').insert([data]).select();
     },
 
     delete: async (ruleId: string) => {
@@ -122,11 +201,32 @@ export const api = {
 
   publicForms: {
     get: async (token: string) => {
-      return insforge.database.from('public_forms').select('form_id, forms(id, title, description, form_questions(*))').eq('token', token).single();
+      const { data, error } = await insforge.database
+        .from('public_forms')
+        .select('form_id, forms(id, title, description, form_questions(*))')
+        .eq('token', token)
+        .single();
+
+      if (error || !data) {
+        return { data, error };
+      }
+
+      const form = Array.isArray((data as any).forms) ? (data as any).forms[0] : (data as any).forms;
+      const questions = (form?.form_questions || [])
+        .map(normalizeQuestion)
+        .sort((a: any, b: any) => a.question_order - b.question_order);
+
+      return {
+        data: {
+          ...(data as any),
+          forms: form ? { ...form, form_questions: questions, questions } : form,
+        },
+        error: null,
+      };
     },
 
     trackEvent: async (formId: string, eventType: string, metadata?: Record<string, any>) => {
-      return insforge.database.from('form_analytics_events').insert({ form_id: formId, event_type: eventType, metadata: metadata || {} });
+      return insforge.database.from('form_analytics_events').insert([{ form_id: formId, event_type: eventType, metadata: metadata || {} }]);
     },
   },
 

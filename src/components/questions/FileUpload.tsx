@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { QuestionProps } from './ShortAnswer';
 import { api } from '../../services/api';
 
@@ -8,7 +8,7 @@ export const FileUpload: React.FC<QuestionProps> = ({
   onChange,
   disabled = false,
   hideLabel = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor,
   uploadContext
 }) => {
@@ -19,6 +19,13 @@ export const FileUpload: React.FC<QuestionProps> = ({
   const fileName = value?.text || value?.files?.[0]?.filename || value?.files?.[0]?.original_filename || '';
   const acceptedTypes = question.settings?.file_types?.join(',') || '*';
   const maxSize = question.settings?.max_file_size || 10485760; // 10MB default
+  const allowedTypes = Array.isArray(question.settings?.file_types) ? question.settings.file_types : [];
+
+  const sanitizeFileName = (name: string) =>
+    name
+      .replace(/[/\\?%*:|"<>]/g, '-')
+      .replace(/\s+/g, '-')
+      .slice(0, 120) || 'upload';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,13 +35,20 @@ export const FileUpload: React.FC<QuestionProps> = ({
         return;
       }
 
+      if (allowedTypes.length > 0 && file.type && !allowedTypes.includes(file.type)) {
+        alert('This file type is not allowed');
+        return;
+      }
+
       setIsUploading(true);
       setUploadError('');
 
       try {
+        const randomPart = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const safeFileName = sanitizeFileName(file.name);
         const path = uploadContext?.token 
-          ? `uploads/${uploadContext.token}/${Date.now()}-${file.name}`
-          : `uploads/${Date.now()}-${file.name}`;
+          ? `uploads/${uploadContext.token}/${randomPart}-${safeFileName}`
+          : `uploads/${randomPart}-${safeFileName}`;
 
         const result = await api.storage.upload('form-uploads', file, path);
 

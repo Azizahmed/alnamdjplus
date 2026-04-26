@@ -183,8 +183,8 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
           borderRadius: '12px',
           fontSize: '12px',
           fontWeight: '600',
-          background: isComplete ? '#ecfdf5' : '#fef3c7',
-          color: isComplete ? '#059669' : '#d97706'
+          background: isComplete ? '#ecfdf5' : '#D9E4E1',
+          color: isComplete ? '#059669' : '#B7791F'
         }}>
           <span style={{
             width: '6px',
@@ -229,7 +229,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
     if (!chartData) return null;
     
     const { data, maxValue, labelCol, valueCol } = chartData;
-    const barColors = ['#b45309', '#d97706', '#f59e0b', '#fcd34d', '#fef3c7'];
+    const barColors = ['#0E7C86', '#B7791F', '#f59e0b', '#fcd34d', '#D9E4E1'];
     
     return (
       <div style={{ padding: '16px' }}>
@@ -296,7 +296,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         <div style={{
           marginTop: '16px',
           padding: '12px',
-          background: '#fffbeb',
+          background: '#E7F5F4',
           borderRadius: '8px',
           display: 'flex',
           gap: '24px',
@@ -304,19 +304,19 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         }}>
           <div>
             <span style={{ color: '#6b7280' }}>Total: </span>
-            <strong style={{ color: '#b45309' }}>
+            <strong style={{ color: '#0E7C86' }}>
               {data.reduce((sum, d) => sum + d.value, 0).toFixed(Number.isInteger(data[0]?.value) ? 0 : 2)}
             </strong>
           </div>
           <div>
             <span style={{ color: '#6b7280' }}>Average: </span>
-            <strong style={{ color: '#b45309' }}>
+            <strong style={{ color: '#0E7C86' }}>
               {(data.reduce((sum, d) => sum + d.value, 0) / data.length).toFixed(2)}
             </strong>
           </div>
           <div>
             <span style={{ color: '#6b7280' }}>Max: </span>
-            <strong style={{ color: '#b45309' }}>
+            <strong style={{ color: '#0E7C86' }}>
               {maxValue.toFixed(Number.isInteger(maxValue) ? 0 : 2)}
             </strong>
           </div>
@@ -330,7 +330,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
     if (!sankeyData) return null;
     
     const { options, flows, total, maxCount } = sankeyData;
-    const colors = ['#b45309', '#92400e', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+    const colors = ['#0E7C86', '#123A3F', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
     
     // Assign colors to each option
     const optionColors: Record<string, string> = {};
@@ -470,7 +470,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         <div style={{
           marginTop: '16px',
           padding: '12px',
-          background: '#fffbeb',
+          background: '#E7F5F4',
           borderRadius: '8px',
           display: 'flex',
           flexWrap: 'wrap',
@@ -479,15 +479,15 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         }}>
           <div>
             <span style={{ color: '#6b7280' }}>Unique Combinations: </span>
-            <strong style={{ color: '#b45309' }}>{flows.length}</strong>
+            <strong style={{ color: '#0E7C86' }}>{flows.length}</strong>
           </div>
           <div>
             <span style={{ color: '#6b7280' }}>Total Responses: </span>
-            <strong style={{ color: '#b45309' }}>{total}</strong>
+            <strong style={{ color: '#0E7C86' }}>{total}</strong>
           </div>
           <div>
             <span style={{ color: '#6b7280' }}>Most Common: </span>
-            <strong style={{ color: '#b45309' }}>{flows[0]?.combination || '-'}</strong>
+            <strong style={{ color: '#0E7C86' }}>{flows[0]?.combination || '-'}</strong>
           </div>
         </div>
       </div>
@@ -523,7 +523,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         <div style={{
           padding: '8px 14px',
           borderBottom: '1px solid #e5e7eb',
-          background: '#fffbeb',
+          background: '#E7F5F4',
           display: 'flex',
           gap: '4px'
         }}>
@@ -534,7 +534,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
               fontSize: '12px',
               fontWeight: '600',
               color: viewMode === 'table' ? 'white' : '#6b7280',
-              background: viewMode === 'table' ? '#b45309' : 'transparent',
+              background: viewMode === 'table' ? '#0E7C86' : 'transparent',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -559,7 +559,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
               fontSize: '12px',
               fontWeight: '600',
               color: viewMode === 'chart' ? 'white' : '#6b7280',
-              background: viewMode === 'chart' ? '#b45309' : 'transparent',
+              background: viewMode === 'chart' ? '#0E7C86' : 'transparent',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -584,7 +584,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
                 fontSize: '12px',
                 fontWeight: '600',
                 color: viewMode === 'sankey' ? 'white' : '#6b7280',
-                background: viewMode === 'sankey' ? '#b45309' : 'transparent',
+                background: viewMode === 'sankey' ? '#0E7C86' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -636,9 +636,9 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
                     fontSize: '11px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: '#b45309',
-                    background: '#fffbeb',
-                    borderBottom: '2px solid #fef3c7',
+                    color: '#0E7C86',
+                    background: '#E7F5F4',
+                    borderBottom: '2px solid #D9E4E1',
                     whiteSpace: 'nowrap',
                     position: 'sticky',
                     top: 0,
@@ -658,7 +658,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
                   background: rowIdx % 2 === 0 ? '#ffffff' : '#fafafa',
                   transition: 'background 0.15s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#fffbeb'}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#E7F5F4'}
                 onMouseLeave={(e) => e.currentTarget.style.background = rowIdx % 2 === 0 ? '#ffffff' : '#fafafa'}
               >
                 {columns.map((col, colIdx) => (
@@ -695,7 +695,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
         color: '#6b7280'
       }}>
         <span>
-          <strong style={{ color: '#b45309' }}>{rowCount || rows.length}</strong> {(rowCount || rows.length) === 1 ? 'row' : 'rows'}
+          <strong style={{ color: '#0E7C86' }}>{rowCount || rows.length}</strong> {(rowCount || rows.length) === 1 ? 'row' : 'rows'}
         </span>
         {rows.length < (rowCount || rows.length) && (
           <span style={{ fontStyle: 'italic' }}>

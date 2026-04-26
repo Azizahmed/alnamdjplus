@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -23,7 +23,7 @@ export const InlineEditableText: React.FC<InlineEditableTextProps> = ({
   className = '',
   isTitle = false,
   isDescription = false,
-  boldTextColor = '#b45309'
+  boldTextColor = '#0E7C86'
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -73,7 +73,7 @@ export const InlineEditableText: React.FC<InlineEditableTextProps> = ({
     fontSize: isTitle ? '18px' : isDescription ? '14px' : '16px',
     fontWeight: isTitle ? (style.fontWeight || '700') : (style.fontWeight || '400'),
     fontFamily: 'inherit',
-    border: '2px solid #4A4540',
+    border: '2px solid #123A3F',
     borderRadius: '6px',
     outline: 'none',
     background: '#ffffff',
@@ -243,7 +243,7 @@ export const EditableOptions: React.FC<EditableOptionsProps> = ({
                 flex: 1,
                 padding: '6px 10px',
                 fontSize: '15px',
-                border: '2px solid #4A4540',
+                border: '2px solid #123A3F',
                 borderRadius: '4px',
                 outline: 'none'
               }}
@@ -321,7 +321,7 @@ export const EditableOptions: React.FC<EditableOptionsProps> = ({
           transition: 'all 0.15s'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = '#b45309';
+          e.currentTarget.style.color = '#0E7C86';
           e.currentTarget.style.background = 'rgba(147, 51, 234, 0.05)';
         }}
         onMouseLeave={(e) => {

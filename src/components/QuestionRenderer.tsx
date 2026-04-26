@@ -24,7 +24,8 @@ import { Button } from './questions/Button';
 interface QuestionRendererProps {
   question: {
     id: number;
-    question_type: string;
+    question_type?: string;
+    type?: string;
     question_text: string;
     description?: string;
     required: boolean;
@@ -51,8 +52,13 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   boldTextColor,
   uploadContext
 }) => {
+  const questionType = question.question_type ?? question.type;
   const questionProps = {
-    question,
+    question: {
+      ...question,
+      question_type: questionType,
+      type: questionType,
+    },
     value,
     onChange,
     disabled,
@@ -62,7 +68,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     uploadContext
   };
 
-  switch (question.question_type) {
+  switch (questionType) {
     case 'short_answer':
       return <ShortAnswer {...questionProps} />;
     case 'long_answer':
@@ -109,7 +115,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       return (
         <div className="question-wrapper">
           <p className="error-message">
-            Unsupported question type: {question.question_type}
+            Unsupported question type: {questionType || 'unknown'}
           </p>
         </div>
       );

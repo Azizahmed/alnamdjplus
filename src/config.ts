@@ -10,6 +10,7 @@ if (!insforgeUrl || !insforgeAnonKey) {
 export const insforge = createClient({
   baseUrl: insforgeUrl,
   anonKey: insforgeAnonKey,
+  timeout: 120000,
 });
 
 export const config = {

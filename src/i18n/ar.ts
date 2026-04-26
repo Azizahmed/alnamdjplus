@@ -386,7 +386,7 @@ export const ar = {
   sessionExpired: 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى',
 
   // Public Form
-  madeWithAlnamodj: 'صُنع بـ Alnamodj',
+  madeWithAlnamdjPlus: 'صُنع بـ AlnamdjPlus',
 
   // Form Responses
   responses: 'الردود',

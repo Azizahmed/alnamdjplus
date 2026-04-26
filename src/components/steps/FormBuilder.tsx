@@ -7,6 +7,7 @@ import { SideAddButton } from '../SideAddButton';
 import { InlineEditableText, EditableOptions } from '../InlineEditableText';
 import { ComponentPicker } from '../ComponentPicker';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { useI18n } from '../../i18n';
 import { api } from '../../services/api';
 import { FormChatPanel } from '../FormChatPanel';
@@ -19,6 +20,7 @@ interface FormBuilderProps {
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormData, onBack }) => {
   const { t } = useI18n();
+  const notification = useNotification();
   const { setSidebarOpen } = useSidebar();
   const initialBackground = normalizeThemeColor(initialFormData.settings?.background_color, 'background', brandTokens.surface);
   const initialText = normalizeThemeColor(initialFormData.settings?.text_color, 'text', brandTokens.text);
@@ -148,8 +150,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const handleFormUpdatedFromChat = async () => {
     try {
       const { data, error } = await api.forms.get(formData.id);
-      if (!error && data?.[0]) {
-        setFormData(data[0]);
+      if (!error && data) {
+        setFormData(data);
       }
     } catch (err) {
       console.error('Failed to refresh form:', err);
@@ -167,13 +169,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     setIsGenerating(true);
     
     try {
-      const { data, error } = await api.ai.generateForm(userQuery);
-      if (error) throw new Error(error.message || 'Failed to generate form');
+      const result = await api.ai.generateForm(userQuery);
+      if (result.error) {
+        const errMsg = result.error.message || result.error.error || JSON.stringify(result.error);
+        throw new Error(errMsg);
+      }
       
-      if (data) {
-        const { data: form, error: formError } = await api.forms.get(data.form_id);
-        if (!formError && form?.[0]) {
-          setFormData(form[0]);
+      if (result.data) {
+        const { data: form, error: formError } = await api.forms.get(result.data.form_id);
+        if (!formError && form) {
+          setFormData(form);
         }
       }
     } catch (err: any) {
@@ -209,8 +214,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       if (error) throw new Error(error.message || 'Failed to regenerate question');
 
       const { data: form } = await api.forms.get(formData.id);
-      if (form?.[0]) {
-        setFormData(form[0]);
+      if (form) {
+        setFormData(form);
       }
     } catch (err: any) {
       console.error('Question regeneration error:', err);
@@ -231,6 +236,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         alert('Failed to delete question. Please try again.');
       }
     }
+  };
+
+  const getPublishErrorMessage = (error: any) => {
+    const code = error?.code || error?.error;
+    const message = error?.message || '';
+
+    if (code === 'UNAUTHENTICATED') {
+      return 'انتهت جلسة الدخول. سجّل الدخول مرة أخرى ثم حاول النشر.';
+    }
+
+    if (code === '42501' || message.includes('row-level security')) {
+      return 'تعذر نشر النموذج بسبب صلاحيات قاعدة البيانات لجدول public_forms. يحتاج الجدول إلى سياسة RLS تسمح لمالك النموذج بإنشاء رابط نشر.';
+    }
+
+    return message || 'تعذر إنشاء رابط النشر. حاول مرة أخرى.';
   };
 
   // Handle inline editing of question text, description, or options
@@ -339,8 +359,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         
         // Refresh form data
         const { data: form } = await api.forms.get(formData.id);
-        if (form?.[0]) {
-          setFormData(form[0]);
+        if (form) {
+          setFormData(form);
         }
       } catch (err) {
         console.error('AI generate error:', err);
@@ -401,8 +421,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       
       // Refresh form data
       const { data: form } = await api.forms.get(formData.id);
-      if (form?.[0]) {
-        setFormData(form[0]);
+      if (form) {
+        setFormData(form);
       }
       
       // Reset insert index
@@ -416,37 +436,40 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const handlePublish = async () => {
     try {
       const token = crypto.randomUUID().replace(/-/g, '');
-      const { error } = await api.forms.publish(formData.id, token);
+      const { data, error } = await api.forms.publish(formData.id, token);
       
       if (!error) {
-        const link = `${window.location.origin}/forms/${token}`;
+        const publishedToken = (data as any)?.token || token;
+        const link = `${window.location.origin}/forms/${publishedToken}`;
         setPublishLink(link);
         setShowPublishPopup(true);
       } else {
         console.error('Publish failed:', error);
-        alert('Failed to create publish link. Please try again.');
+        notification.error(getPublishErrorMessage(error), 'تعذر نشر النموذج');
       }
     } catch (error) {
       console.error('Failed to create publish link:', error);
-      alert('Failed to create publish link. Please try again.');
+      notification.error(getPublishErrorMessage(error), 'تعذر نشر النموذج');
     }
   };
 
   const handlePreview = async () => {
     try {
       const token = crypto.randomUUID().replace(/-/g, '');
-      const { error } = await api.forms.publish(formData.id, token);
+      const { data, error } = await api.forms.publish(formData.id, token);
       
       if (!error) {
-        const previewUrl = `${window.location.origin}/forms/${token}?review=true`;
+        const publishedToken = (data as any)?.token || token;
+        const previewUrl = `${window.location.origin}/forms/${publishedToken}?review=true`;
         window.open(previewUrl, '_blank');
       } else {
-        alert('Failed to generate preview. Please try again.');
+        console.error('Preview publish failed:', error);
+        notification.error(getPublishErrorMessage(error), 'تعذر إنشاء المعاينة');
       }
     } catch (error) {
       console.error('Preview failed:', error);
-      alert('Failed to generate preview. Please try again.');
-        }
+      notification.error(getPublishErrorMessage(error), 'تعذر إنشاء المعاينة');
+    }
   };
 
   const handleDeleteForm = async () => {
@@ -505,7 +528,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     color: brandTokens.text,
     background: 'linear-gradient(180deg, #ffffff 0%, #fbf8f4 100%)',
     border: `1px solid ${brandTokens.border}`,
-    boxShadow: '0 4px 12px rgba(74, 69, 64, 0.06)'
+    boxShadow: '0 4px 12px rgba(18, 58, 63, 0.06)'
   };
 
   const toolbarIconButton: React.CSSProperties = {
@@ -516,7 +539,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     color: brandTokens.textSoft,
     background: 'linear-gradient(180deg, #ffffff 0%, #fbf8f4 100%)',
     border: `1px solid ${brandTokens.border}`,
-    boxShadow: '0 4px 12px rgba(74, 69, 64, 0.06)'
+    boxShadow: '0 4px 12px rgba(18, 58, 63, 0.06)'
   };
 
   const toolbarPrimaryButton: React.CSSProperties = {
@@ -524,7 +547,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     color: '#ffffff',
     background: `linear-gradient(135deg, ${resolvedAccent} 0%, ${brandTokens.primary} 100%)`,
     border: 'none',
-    boxShadow: '0 10px 24px rgba(74, 69, 64, 0.18)'
+    boxShadow: '0 10px 24px rgba(18, 58, 63, 0.18)'
   };
 
   return (
@@ -545,12 +568,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        direction: 'ltr',
         gap: '16px',
-        boxShadow: '0 10px 30px rgba(74, 69, 64, 0.06)',
+        boxShadow: '0 10px 30px rgba(18, 58, 63, 0.06)',
         flexShrink: 0,
         zIndex: 10
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: '16px',
+          flex: '0 0 auto',
+          minWidth: 0,
+          direction: 'ltr'
+        }}>
           {onBack && (
             <button
               onClick={onBack}
@@ -564,7 +596,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          flex: '0 0 auto',
+          marginLeft: 'auto',
+          minWidth: 0,
+          direction: 'ltr'
+        }}>
           {/* Add Component Button */}
           <button
             onClick={() => {
@@ -666,7 +708,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                   marginTop: '8px',
                   background: '#ffffff',
                   borderRadius: '16px',
-                  boxShadow: '0 18px 40px rgba(74, 69, 64, 0.14)',
+                  boxShadow: '0 18px 40px rgba(18, 58, 63, 0.14)',
                   border: `1px solid ${brandTokens.border}`,
                   padding: '16px',
                   zIndex: 100,
@@ -762,7 +804,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                   marginTop: '8px',
                   background: '#ffffff',
                   borderRadius: '16px',
-                  boxShadow: '0 18px 40px rgba(74, 69, 64, 0.14)',
+                  boxShadow: '0 18px 40px rgba(18, 58, 63, 0.14)',
                   border: `1px solid ${brandTokens.border}`,
                   padding: '16px',
                   zIndex: 100,
@@ -902,7 +944,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         display: 'flex',
         position: 'relative',
         overflow: 'hidden',
-        minHeight: 0
+        minHeight: 0,
+        direction: 'ltr'
       }}>
         {/* Collapsed Chat Toggle */}
         {!showChat && (
@@ -910,7 +953,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             onClick={handleOpenChat}
             style={{
               width: '44px',
-              background: 'linear-gradient(180deg, #F5F3F0 0%, #FAF8F6 100%)',
+              background: 'linear-gradient(180deg, #F7FAF8 0%, #F7FAF8 100%)',
               border: 'none',
           borderRight: `1px solid ${brandTokens.borderStrong}`,
               cursor: 'pointer',
@@ -923,8 +966,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
               transition: 'all 0.15s'
             }}
             title="Open chat panel"
-            onMouseEnter={(e) => e.currentTarget.style.background = '#F5F3F0'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(180deg, #F5F3F0 0%, #FAF8F6 100%)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#F7FAF8'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(180deg, #F7FAF8 0%, #F7FAF8 100%)'}
               >
                 <div style={{
               width: '32px',
@@ -959,7 +1002,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             isOpen={true}
             onClose={() => setShowChat(false)}
             onFormUpdated={handleFormUpdatedFromChat}
-            position="right"
+            position="left"
             width={400}
             mode="builder"
             accentColor={resolvedAccent}
@@ -976,7 +1019,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           background: resolvedBackground,
             display: 'flex',
             flexDirection: 'column',
-          position: 'relative'
+          position: 'relative',
+          direction: 'rtl'
           }}>
           {/* Form Title & Description - Sticky at top */}
             <div style={{
@@ -1900,7 +1944,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                         background: '#ffffff',
                         padding: '8px',
                         borderRadius: '12px',
-                        boxShadow: '0 12px 28px rgba(74, 69, 64, 0.12)',
+                        boxShadow: '0 12px 28px rgba(18, 58, 63, 0.12)',
                         border: `1px solid ${brandTokens.border}`
                       }}>
                         {/* AI Edit Button */}
@@ -2048,7 +2092,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                     cursor: 'pointer'
                   }}
                 >
-                  {formData.settings?.submit_button_text || 'Submit'}
+                  {formData.settings?.submit_button_text || 'إرسال'}
                 </button>
               </div>
             </div>
@@ -2087,7 +2131,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                   borderRadius: '12px',
                   cursor: isGenerating ? 'not-allowed' : 'pointer',
                   opacity: isGenerating ? 0.5 : 1,
-                  boxShadow: '0 12px 24px rgba(74, 69, 64, 0.14)'
+                  boxShadow: '0 12px 24px rgba(18, 58, 63, 0.14)'
                 }}
               >
                 {t.addComponent}
@@ -2167,7 +2211,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                   border: 'none',
                   borderRadius: '12px',
                   cursor: 'pointer',
-                  boxShadow: '0 12px 24px rgba(74, 69, 64, 0.14)'
+                  boxShadow: '0 12px 24px rgba(18, 58, 63, 0.14)'
                 }}
               >
                 {t.copyLink}
@@ -2274,8 +2318,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             
             // Refresh form data
             const { data: form } = await api.forms.get(formData.id);
-            if (form?.[0]) {
-              setFormData(form[0]);
+            if (form) {
+              setFormData(form);
             }
           } catch (err) {
             console.error('Generate error:', err);

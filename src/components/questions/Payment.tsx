@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { QuestionProps } from './ShortAnswer';
 
 export const Payment: React.FC<QuestionProps> = ({
@@ -6,7 +6,7 @@ export const Payment: React.FC<QuestionProps> = ({
   value: _value,
   onChange: _onChange,
   disabled: _disabled = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;

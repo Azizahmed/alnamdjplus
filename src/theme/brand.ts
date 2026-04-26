@@ -1,85 +1,89 @@
-export const brandTokens = {
-  primary: '#4A4540',
-  primaryHover: '#3D3834',
-  accent: '#6F5A48',
-  accentSoft: '#EFE4D7',
-  accentMuted: '#A28E7D',
-  background: '#E8E4E0',
-  backgroundSoft: '#F5F3F0',
+﻿export const brandTokens = {
+  primary: '#123A3F',
+  primaryHover: '#0B2B30',
+  primaryLight: '#2A6970',
+  accent: '#0E7C86',
+  accentSoft: '#E7F5F4',
+  accentMuted: '#6AA9AF',
+  background: '#EEF3F2',
+  backgroundSoft: '#F7FAF8',
   surface: '#FFFFFF',
-  surfaceAlt: '#FBF8F4',
-  text: '#2F2924',
-  textSoft: '#6B6560',
-  textMuted: '#837A71',
-  border: '#DDD2C6',
-  borderStrong: '#C9B9A7',
-  success: '#557865',
-  successSoft: '#E7F0EA',
-  danger: '#B85C4C',
-  dangerSoft: '#FBEEEB',
-  warning: '#A97B37',
-  warningSoft: '#F9F0E0'
+  surfaceAlt: '#F4F7F5',
+  text: '#172326',
+  textSoft: '#52666B',
+  textMuted: '#7B8C90',
+  border: '#D9E4E1',
+  borderStrong: '#B8CAC6',
+  success: '#25745A',
+  successSoft: '#E7F5EF',
+  danger: '#BA4A45',
+  dangerSoft: '#FCEDEB',
+  warning: '#B7791F',
+  warningSoft: '#FFF6DB'
 } as const;
 
 const LEGACY_ACCENT_MAP: Record<string, string> = {
   '#B45309': brandTokens.accent,
-  '#92400E': brandTokens.accent,
-  '#D97706': brandTokens.accent,
-  '#F59E0B': brandTokens.accentMuted,
+  '#92400E': brandTokens.primary,
+  '#D97706': brandTokens.warning,
+  '#F59E0B': brandTokens.warning,
   '#9333EA': brandTokens.primary,
-  '#8B5CF6': brandTokens.primary,
+  '#8B5CF6': brandTokens.accent,
   '#7C3AED': brandTokens.primary,
-  '#A855F7': brandTokens.primary,
+  '#A855F7': brandTokens.accentMuted,
   '#C084FC': brandTokens.accentMuted,
   '#B370EF': brandTokens.primary,
-  '#FF6B6B': brandTokens.accent,
-  '#FF6B6BFF': brandTokens.accent
+  '#FF6B6B': brandTokens.danger,
+  '#FF6B6BFF': brandTokens.danger
 };
 
 const LEGACY_SURFACE_MAP: Record<string, string> = {
   '#F3E8FF': brandTokens.surfaceAlt,
   '#EDE9FE': brandTokens.surfaceAlt,
   '#FAE8FF': brandTokens.surfaceAlt,
-  '#FFF7ED': brandTokens.surfaceAlt
+  '#FFF7ED': brandTokens.warningSoft,
+  '#FFFBEB': brandTokens.warningSoft,
+  '#F7FAF8': brandTokens.backgroundSoft,
+  '#EEF3F2': brandTokens.background
 };
 
-const EARTH_BACKGROUND_PRESETS = [
+const PAGE_BACKGROUND_PRESETS = [
   '#FFFFFF',
-  '#FBF8F4',
-  '#F5F3F0',
-  '#EFE8E0',
-  '#E8E4E0',
-  '#F6EFE6',
-  '#F3ECE4',
-  '#EEE4D7',
-  '#F8F4EC',
-  '#F3F0EB'
+  '#F7FAF8',
+  '#EEF3F2',
+  '#E7F5F4',
+  '#F4F7F5',
+  '#F9FAFB',
+  '#EFF6FF',
+  '#FFF6DB',
+  '#F1F5F9',
+  '#ECFDF5'
 ] as const;
 
-const EARTH_TEXT_PRESETS = [
-  '#111827',
+const PAGE_TEXT_PRESETS = [
   brandTokens.text,
   brandTokens.primary,
-  '#5C534B',
+  '#1F2937',
+  '#334155',
   brandTokens.textSoft,
-  '#4E6658',
-  '#3F5B70',
-  '#7A4D3C',
-  '#7A6857',
-  '#6B7280'
+  '#174D43',
+  '#1E3A5F',
+  '#7A4D1D',
+  '#475569',
+  '#111827'
 ] as const;
 
-const EARTH_ACCENT_PRESETS = [
-  brandTokens.primary,
+const PAGE_ACCENT_PRESETS = [
   brandTokens.accent,
-  '#5B493B',
-  '#7A6857',
-  brandTokens.accentMuted,
+  brandTokens.primary,
+  brandTokens.primaryLight,
+  '#2563EB',
+  '#0F766E',
   brandTokens.success,
-  '#3F5B70',
-  brandTokens.danger,
   brandTokens.warning,
-  '#2F2924'
+  brandTokens.danger,
+  '#475569',
+  '#111827'
 ] as const;
 
 const normalizeHex = (value?: string | null) => {
@@ -110,7 +114,7 @@ export const normalizeThemeColor = (
     if (fallback) return fallback;
     if (role === 'background') return brandTokens.surface;
     if (role === 'text') return brandTokens.text;
-    return brandTokens.primary;
+    return brandTokens.accent;
   }
 
   if (role === 'background' && LEGACY_SURFACE_MAP[normalized]) {
@@ -125,7 +129,7 @@ export const normalizeThemeColor = (
 };
 
 export const buildPagePresets = {
-  background: [...EARTH_BACKGROUND_PRESETS],
-  text: [...EARTH_TEXT_PRESETS],
-  accent: [...EARTH_ACCENT_PRESETS]
+  background: [...PAGE_BACKGROUND_PRESETS],
+  text: [...PAGE_TEXT_PRESETS],
+  accent: [...PAGE_ACCENT_PRESETS]
 };

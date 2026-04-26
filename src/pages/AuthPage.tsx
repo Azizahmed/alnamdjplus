@@ -14,7 +14,7 @@ interface AuthFormData {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
-  border: '1px solid #e8e4e0',
+  border: '1px solid #EEF3F2',
   borderRadius: '10px',
   fontSize: '15px',
   outline: 'none',
@@ -27,7 +27,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '14px',
   fontWeight: '600',
-  color: '#4A4540',
+  color: '#123A3F',
   marginBottom: '8px',
   fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
 };
@@ -191,7 +191,7 @@ export const AuthPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #faf8f6 0%, #e8e4e0 100%)',
+        background: 'linear-gradient(135deg, #F7FAF8 0%, #EEF3F2 100%)',
         padding: '24px',
         direction: 'rtl'
       }}>
@@ -201,14 +201,14 @@ export const AuthPage: React.FC = () => {
           background: '#ffffff',
           borderRadius: '20px',
           padding: '40px',
-          boxShadow: '0 8px 32px rgba(74, 69, 64, 0.12)',
-          border: '1px solid #e8e4e0'
+          boxShadow: '0 8px 32px rgba(18, 58, 63, 0.12)',
+          border: '1px solid #EEF3F2'
         }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <div style={{
               width: '64px',
               height: '64px',
-              background: '#4A4540',
+              background: '#123A3F',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
@@ -223,7 +223,7 @@ export const AuthPage: React.FC = () => {
             <h1 style={{
               fontSize: '24px',
               fontWeight: '700',
-              color: '#4A4540',
+              color: '#123A3F',
               marginBottom: '8px',
               fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
             }}>
@@ -237,7 +237,7 @@ export const AuthPage: React.FC = () => {
             }}>
               أرسلنا رمز تحقق مكون من 6 أرقام إلى
               <br />
-              <span style={{ fontWeight: '600', color: '#4A4540', direction: 'ltr', display: 'inline-block' }}>{otpEmail}</span>
+              <span style={{ fontWeight: '600', color: '#123A3F', direction: 'ltr', display: 'inline-block' }}>{otpEmail}</span>
             </p>
           </div>
 
@@ -281,15 +281,15 @@ export const AuthPage: React.FC = () => {
                     textAlign: 'center',
                     fontSize: '22px',
                     fontWeight: '700',
-                    border: digit ? '2px solid #4A4540' : '1px solid #e8e4e0',
+                    border: digit ? '2px solid #123A3F' : '1px solid #EEF3F2',
                     borderRadius: '12px',
                     outline: 'none',
-                    background: digit ? '#faf8f6' : '#ffffff',
+                    background: digit ? '#F7FAF8' : '#ffffff',
                     transition: 'all 0.2s',
                     fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
                   }}
-                  onFocus={e => e.target.style.borderColor = '#4A4540'}
-                  onBlur={e => { if (!digit) e.target.style.borderColor = '#e8e4e0'; }}
+                  onFocus={e => e.target.style.borderColor = '#123A3F'}
+                  onBlur={e => { if (!digit) e.target.style.borderColor = '#EEF3F2'; }}
                 />
               ))}
             </div>
@@ -300,7 +300,7 @@ export const AuthPage: React.FC = () => {
               style={{
                 width: '100%',
                 padding: '14px 24px',
-                background: loading || otp.some(d => !d) ? '#9B8B7A' : '#4A4540',
+                background: loading || otp.some(d => !d) ? '#6AA9AF' : '#123A3F',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -311,8 +311,8 @@ export const AuthPage: React.FC = () => {
                 fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif',
                 marginBottom: '16px'
               }}
-              onMouseEnter={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#3D3834'; }}
-              onMouseLeave={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#4A4540'; }}
+              onMouseEnter={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#0B2B30'; }}
+              onMouseLeave={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#123A3F'; }}
             >
               {loading ? 'جاري التحقق...' : 'تحقق'}
             </button>
@@ -329,7 +329,7 @@ export const AuthPage: React.FC = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: resendCooldown > 0 ? '#9B8B7A' : '#4A4540',
+                color: resendCooldown > 0 ? '#6AA9AF' : '#123A3F',
                 fontWeight: '600',
                 fontSize: '14px',
                 cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
@@ -348,7 +348,7 @@ export const AuthPage: React.FC = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#9B8B7A',
+                color: '#6AA9AF',
                 fontSize: '14px',
                 cursor: 'pointer',
                 fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
@@ -368,7 +368,7 @@ export const AuthPage: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #faf8f6 0%, #e8e4e0 100%)',
+      background: 'linear-gradient(135deg, #F7FAF8 0%, #EEF3F2 100%)',
       padding: '24px',
       direction: 'rtl'
     }}>
@@ -378,14 +378,14 @@ export const AuthPage: React.FC = () => {
         background: '#ffffff',
         borderRadius: '20px',
         padding: '40px',
-        boxShadow: '0 8px 32px rgba(74, 69, 64, 0.12)',
-        border: '1px solid #e8e4e0'
+        boxShadow: '0 8px 32px rgba(18, 58, 63, 0.12)',
+        border: '1px solid #EEF3F2'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
             width: '64px',
             height: '64px',
-            background: '#4A4540',
+            background: '#123A3F',
             borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
@@ -401,7 +401,7 @@ export const AuthPage: React.FC = () => {
           <h1 style={{
             fontSize: '24px',
             fontWeight: '700',
-            color: '#4A4540',
+            color: '#123A3F',
             marginBottom: '8px',
             fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'
           }}>
@@ -444,8 +444,8 @@ export const AuthPage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="أدخل اسمك"
                 style={inputStyle}
-                onFocus={(e) => e.target.style.borderColor = '#4A4540'}
-                onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
+                onFocus={(e) => e.target.style.borderColor = '#123A3F'}
+                onBlur={(e) => e.target.style.borderColor = '#EEF3F2'}
               />
             </div>
           )}
@@ -460,8 +460,8 @@ export const AuthPage: React.FC = () => {
               placeholder="you@example.com"
               dir="ltr"
               style={{ ...inputStyle, textAlign: 'left' }}
-              onFocus={(e) => e.target.style.borderColor = '#4A4540'}
-              onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
+              onFocus={(e) => e.target.style.borderColor = '#123A3F'}
+              onBlur={(e) => e.target.style.borderColor = '#EEF3F2'}
             />
           </div>
 
@@ -475,8 +475,8 @@ export const AuthPage: React.FC = () => {
               placeholder="••••••••"
               dir="ltr"
               style={{ ...inputStyle, textAlign: 'left' }}
-              onFocus={(e) => e.target.style.borderColor = '#4A4540'}
-              onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
+              onFocus={(e) => e.target.style.borderColor = '#123A3F'}
+              onBlur={(e) => e.target.style.borderColor = '#EEF3F2'}
             />
           </div>
 
@@ -491,8 +491,8 @@ export const AuthPage: React.FC = () => {
                 placeholder="••••••••"
                 dir="ltr"
                 style={{ ...inputStyle, textAlign: 'left' }}
-                onFocus={(e) => e.target.style.borderColor = '#4A4540'}
-                onBlur={(e) => e.target.style.borderColor = '#e8e4e0'}
+                onFocus={(e) => e.target.style.borderColor = '#123A3F'}
+                onBlur={(e) => e.target.style.borderColor = '#EEF3F2'}
               />
             </div>
           )}
@@ -503,7 +503,7 @@ export const AuthPage: React.FC = () => {
             style={{
               width: '100%',
               padding: '14px 24px',
-              background: loading ? '#9B8B7A' : '#4A4540',
+              background: loading ? '#6AA9AF' : '#123A3F',
               color: '#ffffff',
               border: 'none',
               borderRadius: '10px',
@@ -515,10 +515,10 @@ export const AuthPage: React.FC = () => {
               marginBottom: '16px'
             }}
             onMouseEnter={(e) => {
-              if (!loading) e.currentTarget.style.background = '#3D3834';
+              if (!loading) e.currentTarget.style.background = '#0B2B30';
             }}
             onMouseLeave={(e) => {
-              if (!loading) e.currentTarget.style.background = '#4A4540';
+              if (!loading) e.currentTarget.style.background = '#123A3F';
             }}
           >
             {loading ? 'جاري التحميل...' : mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب'}
@@ -537,8 +537,8 @@ export const AuthPage: React.FC = () => {
               width: '100%',
               padding: '12px 24px',
               background: '#ffffff',
-              color: '#4A4540',
-              border: '1px solid #e8e4e0',
+              color: '#123A3F',
+              border: '1px solid #EEF3F2',
               borderRadius: '10px',
               fontSize: '15px',
               fontWeight: '600',
@@ -551,8 +551,8 @@ export const AuthPage: React.FC = () => {
               justifyContent: 'center',
               gap: '8px'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#4A4540'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e8e4e0'}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#123A3F'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#EEF3F2'}
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -574,7 +574,7 @@ export const AuthPage: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: '#4A4540',
+              color: '#123A3F',
               fontWeight: '600',
               fontSize: '14px',
               cursor: 'pointer',
@@ -592,7 +592,7 @@ export const AuthPage: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: '#9B8B7A',
+              color: '#6AA9AF',
               fontSize: '14px',
               cursor: 'pointer',
               fontFamily: 'TheYearofTheCamel, Noto Sans Arabic, sans-serif'

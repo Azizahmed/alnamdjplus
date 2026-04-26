@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useI18n } from '../i18n';
 
 interface SharePopupProps {
@@ -87,7 +87,7 @@ export const SharePopup: React.FC<SharePopupProps> = ({
               lineHeight: 1
             }}
           >
-            ×
+            Ã—
           </button>
         </div>
 
@@ -102,7 +102,7 @@ export const SharePopup: React.FC<SharePopupProps> = ({
         {expiresAt && (
           <div style={{
             padding: '12px',
-            backgroundColor: '#fef3c7',
+            backgroundColor: '#D9E4E1',
             border: '1px solid #fbbf24',
             borderRadius: '8px',
             marginBottom: '16px'
@@ -110,7 +110,7 @@ export const SharePopup: React.FC<SharePopupProps> = ({
             <p style={{
               margin: 0,
               fontSize: '13px',
-              color: '#92400e'
+              color: '#123A3F'
             }}>
               {t.linkExpiresIn24Hours}
             </p>
@@ -141,7 +141,7 @@ export const SharePopup: React.FC<SharePopupProps> = ({
             onClick={handleCopy}
             style={{
               padding: '12px 20px',
-              background: copied ? '#10b981' : 'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+              background: copied ? '#10b981' : 'linear-gradient(135deg, #0E7C86 0%, #B7791F 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -157,13 +157,13 @@ export const SharePopup: React.FC<SharePopupProps> = ({
             }}
             onMouseEnter={(e) => {
               if (!copied) {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #92400e 0%, #b45309 100%)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #123A3F 0%, #0E7C86 100%)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)';
               }
             }}
             onMouseLeave={(e) => {
               if (!copied) {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #b45309 0%, #d97706 100%)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #0E7C86 0%, #B7791F 100%)';
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(147, 51, 234, 0.2)';
               }
             }}
@@ -215,7 +215,7 @@ export const SharePopup: React.FC<SharePopupProps> = ({
             onClick={handleOpenLink}
             style={{
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+              background: 'linear-gradient(135deg, #0E7C86 0%, #B7791F 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -226,11 +226,11 @@ export const SharePopup: React.FC<SharePopupProps> = ({
               boxShadow: '0 2px 8px rgba(147, 51, 234, 0.2)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #92400e 0%, #b45309 100%)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #123A3F 0%, #0E7C86 100%)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #b45309 0%, #d97706 100%)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #0E7C86 0%, #B7791F 100%)';
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(147, 51, 234, 0.2)';
             }}
           >

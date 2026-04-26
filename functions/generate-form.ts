@@ -1,14 +1,64 @@
 import { createClient } from 'https://esm.sh/@insforge/sdk@latest';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL') || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get('Origin') || '';
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allowOrigin = allowedOrigins.includes(origin) || isLocalhost ? origin : (allowedOrigins[0] || 'null');
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+};
+
+const createChatCompletion = async (messages: any[], maxTokens: number) => {
+  const apiKey = Deno.env.get('OPENROUTER_API_KEY');
+  const model = Deno.env.get('OPENROUTER_MODEL');
+
+  if (!apiKey) {
+    throw new Error('Missing OPENROUTER_API_KEY secret');
+  }
+  if (!model) {
+    throw new Error('Missing OPENROUTER_MODEL secret');
+  }
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': Deno.env.get('APP_URL') ?? 'https://alnamdjplus.app',
+      'X-Title': 'AlnamdjPlus',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    }),
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error?.message || body?.message || `OpenRouter request failed (${response.status})`);
+  }
+
+  return body;
 };
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: getCorsHeaders(req) });
   }
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -66,25 +116,19 @@ Return a JSON object with the following structure:
   ]
 }
 
-Generate appropriate question types based on the user's request. Include validation rules, options for choice questions, and conditional logic where appropriate.
+Generate 5 to 8 high-quality questions unless the user explicitly asks for more. Include validation rules, options for choice questions, and conditional logic only when it clearly improves the form.
 
 Language: ${language}`;
 
-    const aiResponse = await insforge.ai.chat({
-      messages: [
+    const aiResponse = await createChatCompletion(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ],
-      model: 'openai/gpt-4o-mini',
-      temperature: 0.7,
-      max_tokens: 4000,
-    });
+      2500
+    );
 
-    if (aiResponse.error) {
-      throw new Error(aiResponse.error.message);
-    }
-
-    const content = aiResponse.data?.choices?.[0]?.message?.content;
+    const content = aiResponse.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error('No response from AI');
     }
@@ -103,12 +147,12 @@ Language: ${language}`;
 
     const { data: form, error: formError } = await insforge.database
       .from('forms')
-      .insert({
+      .insert([{
         user_id: userData.user.id,
         title: formData.title,
         description: formData.description,
         settings: {},
-      })
+      }])
       .select();
 
     if (formError) {
@@ -158,7 +202,7 @@ Language: ${language}`;
     const token = crypto.randomUUID().replace(/-/g, '');
     const { error: publicError } = await insforge.database
       .from('public_forms')
-      .insert({ form_id: formId, token, settings: {} });
+      .insert([{ form_id: formId, token, settings: {} }]);
 
     if (publicError) {
       console.error('Failed to create public form:', publicError);

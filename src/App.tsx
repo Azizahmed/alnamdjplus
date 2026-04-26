@@ -14,6 +14,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { I18nProvider } from './i18n';
 import { AuthPage } from './pages/AuthPage';
+import { api } from './services/api';
 
 function FormBuilderPage() {
   const location = useLocation();
@@ -23,6 +24,12 @@ function FormBuilderPage() {
 
   useEffect(() => {
     const state = location.state as any;
+    if (state?.createNew) {
+      setFormData(null);
+      setCurrentStep(0);
+      return;
+    }
+
     if (state?.formId) {
       loadExistingForm(state.formId);
     }
@@ -31,12 +38,7 @@ function FormBuilderPage() {
   const loadExistingForm = async (formId: string) => {
     setLoading(true);
     try {
-      const { insforge } = await import('./config');
-      const { data } = await insforge.database
-        .from('forms')
-        .select('*, form_questions(*), conditional_rules(*)')
-        .eq('id', formId)
-        .single();
+      const { data } = await api.forms.get(formId);
       if (data) {
         setFormData(data);
         setCurrentStep(1);
@@ -96,14 +98,14 @@ function AppRoutes() {
   const location = useLocation();
   const { user, loading } = useAuth();
   const isAuthenticated = !!user;
+  const isPublicFormPath = /^\/forms\/[^/]+$/.test(location.pathname);
   
   const showSidebar = isAuthenticated && ![
     '/',
     '/auth',
     '/account'
-  ].includes(location.pathname) && !location.pathname.startsWith('/forms/');
+  ].includes(location.pathname) && !isPublicFormPath;
 
-  const isPublicFormPath = /^\/forms\/[^\/]+$/.test(location.pathname);
   const showNavbar = !isPublicFormPath;
 
   if (loading) {

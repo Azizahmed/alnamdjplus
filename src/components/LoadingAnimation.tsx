@@ -41,8 +41,8 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ className })
           style={{
             width: '16px',
             height: '16px',
-            border: '2px solid #E8E4E0',
-            borderTop: '2px solid #4A4540',
+            border: '2px solid #EEF3F2',
+            borderTop: '2px solid #123A3F',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite'
           }}

@@ -240,7 +240,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                 fontSize: '13px',
                 fontWeight: '600',
                 color: '#ffffff',
-                background: '#b45309',
+                background: '#0E7C86',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -288,9 +288,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     margin: '0 6px 8px',
                     padding: '8px 10px',
                     fontSize: '13px',
-                    color: showGenerateInput ? '#b45309' : '#374151',
-                    background: showGenerateInput ? '#fffbeb' : 'transparent',
-                    border: showGenerateInput ? '1px solid #b45309' : '1px solid transparent',
+                    color: showGenerateInput ? '#0E7C86' : '#374151',
+                    background: showGenerateInput ? '#E7F5F4' : 'transparent',
+                    border: showGenerateInput ? '1px solid #0E7C86' : '1px solid transparent',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -331,9 +331,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         margin: '0 6px 2px',
                         padding: '7px 10px',
                         fontSize: '13px',
-                        color: isSelected ? '#b45309' : '#374151',
-                        background: isSelected ? '#fffbeb' : 'transparent',
-                        border: isSelected ? '1px solid #b45309' : '1px solid transparent',
+                        color: isSelected ? '#0E7C86' : '#374151',
+                        background: isSelected ? '#E7F5F4' : 'transparent',
+                        border: isSelected ? '1px solid #0E7C86' : '1px solid transparent',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -348,7 +348,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         width: '18px',
                         textAlign: 'center',
                         fontSize: '13px',
-                        color: isSelected ? '#b45309' : '#6b7280'
+                        color: isSelected ? '#0E7C86' : '#6b7280'
                       }}>
                         {item.icon}
                       </span>
@@ -384,9 +384,9 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         margin: '0 6px 2px',
                         padding: '7px 10px',
                         fontSize: '13px',
-                        color: isSelected ? '#b45309' : '#374151',
-                        background: isSelected ? '#fffbeb' : 'transparent',
-                        border: isSelected ? '1px solid #b45309' : '1px solid transparent',
+                        color: isSelected ? '#0E7C86' : '#374151',
+                        background: isSelected ? '#E7F5F4' : 'transparent',
+                        border: isSelected ? '1px solid #0E7C86' : '1px solid transparent',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -400,7 +400,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         width: '18px',
                         textAlign: 'center',
                         fontSize: '13px',
-                        color: isSelected ? '#b45309' : '#6b7280'
+                        color: isSelected ? '#0E7C86' : '#6b7280'
                       }}>
                         {item.icon}
                       </span>
@@ -476,7 +476,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       background: '#ffffff',
                       lineHeight: '1.5'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#b45309'}
+                    onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                     onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey && generatePrompt.trim()) {
@@ -499,7 +499,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#ffffff',
-                      background: generatePrompt.trim() ? '#b45309' : '#d1d5db',
+                      background: generatePrompt.trim() ? '#0E7C86' : '#d1d5db',
                       border: 'none',
                       borderRadius: '6px',
                       cursor: generatePrompt.trim() ? 'pointer' : 'not-allowed'
@@ -547,18 +547,28 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                 </div>
 
                 {/* Mode Toggle */}
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: '8px',
+                  padding: '8px',
+                  borderRadius: '12px',
+                  border: '1px solid #D9E4E1',
+                  background: '#F7FAF8'
+                }}>
                   <button
                     onClick={() => setEditMode('manual')}
                     style={{
-                      padding: '5px 10px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: editMode === 'manual' ? '#b45309' : '#6b7280',
-                      background: editMode === 'manual' ? '#fffbeb' : '#ffffff',
-                      border: `1px solid ${editMode === 'manual' ? '#b45309' : '#e5e7eb'}`,
-                      borderRadius: '5px',
-                      cursor: 'pointer'
+                      minHeight: '46px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      fontWeight: '800',
+                      color: editMode === 'manual' ? '#0E7C86' : '#6b7280',
+                      background: editMode === 'manual' ? '#ffffff' : 'transparent',
+                      border: `1px solid ${editMode === 'manual' ? '#0E7C86' : '#e5e7eb'}`,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      boxShadow: editMode === 'manual' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none'
                     }}
                   >
                     Edit
@@ -566,17 +576,20 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                   <button
                     onClick={() => setEditMode('ai')}
                     style={{
-                      padding: '5px 10px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      color: editMode === 'ai' ? '#b45309' : '#6b7280',
-                      background: editMode === 'ai' ? '#fffbeb' : '#ffffff',
-                      border: `1px solid ${editMode === 'ai' ? '#b45309' : '#e5e7eb'}`,
-                      borderRadius: '5px',
+                      minHeight: '46px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      fontWeight: '800',
+                      color: editMode === 'ai' ? '#0E7C86' : '#6b7280',
+                      background: editMode === 'ai' ? '#ffffff' : 'transparent',
+                      border: `1px solid ${editMode === 'ai' ? '#0E7C86' : '#e5e7eb'}`,
+                      borderRadius: '10px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: editMode === 'ai' ? '0 10px 22px rgba(14, 124, 134, 0.1)' : 'none'
                     }}
                   >
                     ✨ AI
@@ -604,7 +617,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                           outline: 'none',
                           background: '#ffffff'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#b45309'}
+                        onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                         onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       />
                     </div>
@@ -628,7 +641,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                           outline: 'none',
                           background: '#ffffff'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#b45309'}
+                        onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                         onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       />
                     </div>
@@ -658,7 +671,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                                   outline: 'none',
                                   background: '#ffffff'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#b45309'}
+                                onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                               />
                               {editOptions.length > 1 && (
@@ -688,7 +701,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                               alignSelf: 'flex-start',
                               padding: '4px 8px',
                               fontSize: '12px',
-                              color: '#b45309',
+                              color: '#0E7C86',
                               background: 'transparent',
                               border: '1px dashed #fcd34d',
                               borderRadius: '4px',
@@ -725,7 +738,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                         lineHeight: '1.4',
                         background: '#ffffff'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#b45309'}
+                      onFocus={(e) => e.target.style.borderColor = '#0E7C86'}
                       onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                     />
                   </div>
@@ -743,7 +756,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     Preview
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '2px' }}>
-                    {editText || t.yourQuestion} <span style={{ color: '#b45309' }}>*</span>
+                    {editText || t.yourQuestion} <span style={{ color: '#0E7C86' }}>*</span>
                   </div>
                   {editDescription && (
                     <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
@@ -757,7 +770,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                           <input 
                             type={selectedItem.id === 'multiple_choice' ? 'radio' : 'checkbox'} 
                             disabled 
-                            style={{ accentColor: '#b45309' }} 
+                            style={{ accentColor: '#0E7C86' }}
                           />
                           {opt}
                         </label>
@@ -795,7 +808,7 @@ export const ComponentPicker: React.FC<ComponentPickerProps> = ({
                     fontSize: '14px',
                     fontWeight: '600',
                     color: '#ffffff',
-                    background: '#b45309',
+                    background: '#0E7C86',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',

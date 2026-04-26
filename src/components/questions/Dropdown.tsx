@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { QuestionProps } from './ShortAnswer';
 
 export const Dropdown: React.FC<QuestionProps> = ({
@@ -7,7 +7,7 @@ export const Dropdown: React.FC<QuestionProps> = ({
   onChange,
   disabled = false,
   hideLabel = false,
-  accentColor = '#b45309',
+  accentColor = '#0E7C86',
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;

@@ -94,7 +94,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <span style={{
               fontSize: '11px',
               fontWeight: '700',
-              color: '#b45309',
+              color: '#0E7C86',
               background: 'rgba(147, 51, 234, 0.1)',
               padding: '3px 10px',
               borderRadius: '12px'
@@ -153,7 +153,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                     fontSize: '13px',
                     fontWeight: '500',
                     color: filters.dateRange === option.value ? 'white' : '#374151',
-                    background: filters.dateRange === option.value ? '#b45309' : '#f9fafb',
+                    background: filters.dateRange === option.value ? '#0E7C86' : '#f9fafb',
                     border: 'none',
                     borderRadius: '20px',
                     cursor: 'pointer',
@@ -196,7 +196,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       transition: 'all 0.15s',
                       cursor: 'pointer'
                     }}
-                    onFocus={(e) => e.currentTarget.style.borderColor = '#b45309'}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#0E7C86'}
                     onBlur={(e) => e.currentTarget.style.borderColor = '#f3f4f6'}
                   />
                 </div>
@@ -218,7 +218,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       transition: 'all 0.15s',
                       cursor: 'pointer'
                     }}
-                    onFocus={(e) => e.currentTarget.style.borderColor = '#b45309'}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#0E7C86'}
                     onBlur={(e) => e.currentTarget.style.borderColor = '#f3f4f6'}
                   />
                 </div>
@@ -249,7 +249,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                       fontSize: '13px',
                       fontWeight: '500',
                       color: isActive ? 'white' : '#374151',
-                      background: isActive ? '#b45309' : '#f9fafb',
+                      background: isActive ? '#0E7C86' : '#f9fafb',
                       border: 'none',
                       borderRadius: '20px',
                       cursor: 'pointer',
@@ -297,7 +297,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                         fontSize: '13px',
                         fontWeight: '500',
                         color: isActive ? 'white' : '#374151',
-                        background: isActive ? '#b45309' : '#f9fafb',
+                        background: isActive ? '#0E7C86' : '#f9fafb',
                         border: 'none',
                         borderRadius: '20px',
                         cursor: 'pointer',
@@ -347,7 +347,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                         fontSize: '13px',
                         fontWeight: '500',
                         color: isActive ? 'white' : '#374151',
-                        background: isActive ? '#b45309' : '#f9fafb',
+                        background: isActive ? '#0E7C86' : '#f9fafb',
                         border: 'none',
                         borderRadius: '20px',
                         cursor: 'pointer',
@@ -382,7 +382,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                   padding: 0,
                   fontSize: '13px',
                   fontWeight: '600',
-                  color: '#b45309',
+                  color: '#0E7C86',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
