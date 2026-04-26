@@ -129,6 +129,13 @@ ALTER TABLE webhook_configs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own forms" ON forms
   FOR SELECT USING (auth.uid() = user_id);
 
+CREATE POLICY "Anyone can view published forms" ON forms
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public_forms WHERE public_forms.form_id = forms.id
+    )
+  );
+
 CREATE POLICY "Users can create their own forms" ON forms
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -143,6 +150,13 @@ CREATE POLICY "Users can view questions of their forms" ON form_questions
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM forms WHERE forms.id = form_questions.form_id AND forms.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Anyone can view questions of published forms" ON form_questions
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public_forms WHERE public_forms.form_id = form_questions.form_id
     )
   );
 
@@ -174,6 +188,15 @@ CREATE POLICY "Users can view rules of their forms" ON conditional_rules
       SELECT 1 FROM form_questions
       JOIN forms ON forms.id = form_questions.form_id
       WHERE form_questions.id = conditional_rules.question_id AND forms.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Anyone can view rules of published forms" ON conditional_rules
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM form_questions
+      JOIN public_forms ON public_forms.form_id = form_questions.form_id
+      WHERE form_questions.id = conditional_rules.question_id
     )
   );
 
