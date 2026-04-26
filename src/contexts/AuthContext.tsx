@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { insforge } from '../config';
 
 interface User {
@@ -11,6 +11,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  hasCheckedUser: boolean;
+  checkUser: () => Promise<User | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<{ requireEmailVerification: boolean }>;
   verifyEmail: (email: string, otp: string) => Promise<void>;
@@ -24,31 +26,34 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasCheckedUser, setHasCheckedUser] = useState(false);
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async (): Promise<User | null> => {
+    setLoading(true);
     try {
       const { data } = await insforge.auth.getCurrentUser();
       if (data?.user) {
-        setUser({
+        const currentUser = {
           id: data.user.id,
           email: data.user.email || '',
           name: data.user.profile?.name,
           avatar_url: data.user.profile?.avatar_url,
-        });
-      } else {
-        setUser(null);
+        };
+        setUser(currentUser);
+        return currentUser;
       }
+
+      setUser(null);
+      return null;
     } catch {
       setUser(null);
+      return null;
     } finally {
+      setHasCheckedUser(true);
       setLoading(false);
     }
-  };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await insforge.auth.signInWithPassword({ email, password });
@@ -60,6 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: data.user.profile?.name,
         avatar_url: data.user.profile?.avatar_url,
       });
+      setHasCheckedUser(true);
     }
   };
 
@@ -83,6 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: data.user.profile?.name,
         avatar_url: data.user.profile?.avatar_url,
       });
+      setHasCheckedUser(true);
     }
   };
 
@@ -103,6 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { error } = await insforge.auth.signOut();
     if (error) throw new Error(error.message);
     setUser(null);
+    setHasCheckedUser(true);
   };
 
   const updateProfile = async (data: { name?: string; avatar_url?: string }) => {
@@ -115,6 +123,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider value={{
       user,
       loading,
+      hasCheckedUser,
+      checkUser,
       signIn,
       signUp,
       verifyEmail,

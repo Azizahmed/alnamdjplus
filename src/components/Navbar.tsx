@@ -80,13 +80,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onAccountClick }) => {
             </svg>
           </button>
         )}
-        <div className="brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <img
-            src={logoSrc}
-            alt="النموذج"
-            className="logo logo-navbar"
-          />
-        </div>
+        {location.pathname !== '/' && (
+          <div className="brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+            <img
+              src={logoSrc}
+              alt="النموذج"
+              className="logo logo-navbar"
+            />
+          </div>
+        )}
       </div>
 
       <div className="navbar-right">

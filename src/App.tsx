@@ -96,9 +96,14 @@ function FormBuilderPage() {
 function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, loading, hasCheckedUser, checkUser } = useAuth();
   const isAuthenticated = !!user;
   const isPublicFormPath = /^\/forms\/[^/]+$/.test(location.pathname);
+  const isProtectedPath = location.pathname === '/build'
+    || location.pathname === '/account'
+    || /^\/forms\/[^/]+\/(responses|analytics)$/.test(location.pathname);
+  const hasOAuthCallback = location.search.includes('insforge_code=');
+  const shouldCheckAuth = (isProtectedPath || hasOAuthCallback) && !isAuthenticated && !hasCheckedUser;
   
   const showSidebar = isAuthenticated && ![
     '/',
@@ -108,7 +113,13 @@ function AppRoutes() {
 
   const showNavbar = !isPublicFormPath;
 
-  if (loading) {
+  useEffect(() => {
+    if (shouldCheckAuth && !loading) {
+      void checkUser();
+    }
+  }, [checkUser, loading, shouldCheckAuth]);
+
+  if (loading || shouldCheckAuth) {
     return (
       <div style={{
         height: '100vh',
