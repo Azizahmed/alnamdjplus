@@ -3178,6 +3178,32 @@ select:focus-visible {
   font-weight: 700;
 }
 
+.responsive-linear-scale {
+  --scale-count: 10;
+  display: grid;
+  grid-template-columns: repeat(var(--scale-count), minmax(40px, 1fr));
+  gap: 8px;
+  width: 100%;
+  direction: rtl;
+  align-items: center;
+  justify-items: center;
+}
+
+.responsive-linear-scale > label,
+.responsive-linear-scale > span {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.responsive-rating-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
 .planner-examples {
   display: flex;
   flex-wrap: wrap;
@@ -3295,5 +3321,49 @@ select:focus-visible {
   .planner-compose-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .public-form-page {
+    padding: 24px 14px 96px !important;
+    overflow-x: hidden;
+  }
+
+  .public-form-container {
+    max-width: 100% !important;
+  }
+
+  .builder-form-header {
+    padding: 28px 16px 20px !important;
+  }
+
+  .builder-form-scroll {
+    overflow-x: hidden !important;
+  }
+
+  .builder-form-canvas {
+    padding: 0 16px 100px !important;
+    max-width: 100% !important;
+  }
+
+  .responsive-linear-scale {
+    grid-template-columns: repeat(5, minmax(40px, 1fr)) !important;
+    gap: 8px;
+  }
+
+  .responsive-rating-options {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .responsive-linear-scale {
+    gap: 6px;
+  }
+
+  .responsive-linear-scale > label > span,
+  .responsive-linear-scale > span {
+    min-width: 34px !important;
+    height: 40px !important;
+    font-size: 14px !important;
   }
 }

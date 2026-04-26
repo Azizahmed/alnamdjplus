@@ -44,7 +44,7 @@ export const Rating: React.FC<QuestionProps> = ({
           )}
         </>
       )}
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div className="responsive-rating-options">
         {[...Array(maxRating)].map((_, index) => {
           const starValue = index + 1;
           const isFilled = starValue <= ratingValue;

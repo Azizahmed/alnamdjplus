@@ -1107,7 +1107,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
         )}
 
         {/* Form Edit Area */}
-          <div style={{
+          <div className="builder-form-scroll" style={{
           flex: 1,
           minHeight: 0, // Critical for flex children to enable scroll
           overflow: 'auto',
@@ -1120,7 +1120,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           fontFamily: resolvedTheme.fontFamily
           }}>
           {/* Form Title & Description - Sticky at top */}
-            <div style={{
+            <div className="builder-form-header" style={{
             position: 'sticky',
             top: 0,
             background: resolvedBackground,
@@ -1147,7 +1147,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           </div>
         </div>
 
-          <div style={{
+          <div className="builder-form-canvas" style={{
             maxWidth: '800px',
             margin: '0 auto',
             width: '100%',
@@ -1816,12 +1816,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                               <span style={{ fontSize: '13px', color: '#9ca3af', minWidth: '30px', textAlign: 'right' }}>{maxVal}</span>
                             </div>
                           ) : (
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div
+                              className="responsive-linear-scale"
+                              style={{
+                                ['--scale-count' as any]: range,
+                              }}
+                            >
                               {[...Array(range)].map((_, i) => (
                                 <span
                                   key={i}
                                   style={{
-                                    width: '40px',
+                                    width: '100%',
+                                    minWidth: '40px',
+                                    maxWidth: '52px',
                                     height: '40px',
                                     display: 'flex',
                                     alignItems: 'center',

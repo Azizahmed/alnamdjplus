@@ -162,11 +162,12 @@ export const LinearScale: React.FC<QuestionProps> = ({
           </div>
         ) : (
           // Buttons for ranges <= 10
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            justifyContent: 'space-between'
-          }}>
+          <div
+            className="responsive-linear-scale"
+            style={{
+              ['--scale-count' as any]: range,
+            }}
+          >
             {[...Array(range)].map((_, index) => {
               const optionValue = minValue + index;
               const isSelected = scaleValue === optionValue;
@@ -174,7 +175,6 @@ export const LinearScale: React.FC<QuestionProps> = ({
                 <label 
                   key={index}
                   style={{
-                    display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     cursor: disabled ? 'not-allowed' : 'pointer'
@@ -191,7 +191,9 @@ export const LinearScale: React.FC<QuestionProps> = ({
                     style={{ display: 'none' }}
                   />
                   <span style={{
-                    width: '44px',
+                    width: '100%',
+                    minWidth: '40px',
+                    maxWidth: '52px',
                     height: '44px',
                     display: 'flex',
                     alignItems: 'center',

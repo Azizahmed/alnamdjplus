@@ -374,7 +374,7 @@ export const PublicForm: React.FC = () => {
   }
 
   return (
-    <div style={{
+    <div className="public-form-page" style={{
       minHeight: '100vh',
       background: displayBackgroundColor,
       padding: '40px 24px 40px 64px',
@@ -462,7 +462,7 @@ export const PublicForm: React.FC = () => {
         </span>
       </a>
 
-      <div style={{
+      <div className="public-form-container" style={{
         maxWidth: '800px',
         margin: '0 auto',
         width: '100%',
