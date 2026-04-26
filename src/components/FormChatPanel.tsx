@@ -548,7 +548,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               boxSizing: 'border-box',
               minHeight: '56px',
               maxHeight: '120px',
-              padding: '14px 54px 14px 16px',
+              padding: '14px 16px 14px 62px',
               fontSize: '14px',
               fontFamily: 'inherit',
               border: '1px solid #e5e7eb',
@@ -558,7 +558,9 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               background: '#ffffff',
               color: '#1f2937',
               boxShadow: `0 2px 8px ${resolvedAccentColor}20`,
-              lineHeight: '1.5'
+              lineHeight: '1.5',
+              direction: 'rtl',
+              textAlign: 'right'
             }}
             onFocus={(e) => {
                e.target.style.borderColor = resolvedAccentColor;
@@ -575,7 +577,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
             style={{
               position: 'absolute',
               bottom: '12px',
-              insetInlineEnd: '12px',
+              insetInlineStart: '12px',
               width: '38px',
               height: '38px',
               borderRadius: '10px',
