@@ -68,6 +68,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showChat, setShowChat] = useState(true); // Chat visible by default in builder
+  const generationStartedRef = useRef(false);
 
   const resolvedBackground = normalizeThemeColor(globalColors.background, 'background', brandTokens.surface);
   const resolvedText = normalizeThemeColor(globalColors.text, 'text', brandTokens.text);
@@ -209,7 +210,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   // Handle form generation on mount if needed
   useEffect(() => {
+    if (generationStartedRef.current) return;
     if (initialFormData.isGenerating && initialFormData.user_query) {
+      generationStartedRef.current = true;
       generateForm(initialFormData.user_query);
     }
   }, []);
@@ -220,7 +223,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     try {
       const result = await api.ai.generateForm(userQuery);
       if (result.error) {
-        const errMsg = result.error.message || result.error.error || JSON.stringify(result.error);
+        const generationError = result.error as any;
+        const errMsg = generationError.message || generationError.error || JSON.stringify(generationError);
         throw new Error(errMsg);
       }
       
@@ -232,7 +236,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       }
     } catch (err: any) {
       console.error('Failed to generate form:', err);
-      alert('Failed to generate form: ' + err.message);
+      notification.error(err.message || 'تعذر إنشاء النموذج. حاول مرة أخرى.', 'فشل إنشاء النموذج');
     } finally {
       setIsGenerating(false);
     }

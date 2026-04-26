@@ -260,6 +260,17 @@ export const api = {
 
   ai: {
     generateForm: async (prompt: string, language?: string) => {
+      const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+      if (userError || !userData?.user) {
+        return {
+          data: null,
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'انتهت جلسة تسجيل الدخول. سجل الدخول مرة أخرى ثم حاول إنشاء النموذج.',
+          },
+        };
+      }
+
       return insforge.functions.invoke('generate-form', {
         body: { prompt, language },
       });

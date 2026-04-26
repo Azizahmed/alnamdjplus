@@ -223,11 +223,19 @@ Language: ${language}`;
       }
     );
   } catch (error) {
+    console.error('generate-form failed:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const status = message === 'Unauthorized' || message === 'Missing authorization header'
+      ? 401
+      : message === 'Missing prompt'
+        ? 400
+        : 500;
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status,
       }
     );
   }
