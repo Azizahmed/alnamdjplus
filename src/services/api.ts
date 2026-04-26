@@ -203,7 +203,7 @@ export const api = {
     get: async (token: string) => {
       const { data, error } = await insforge.database
         .from('public_forms')
-        .select('form_id, forms(id, title, description, form_questions(*))')
+        .select('form_id, forms(id, title, description, settings, form_questions(*))')
         .eq('token', token)
         .single();
 

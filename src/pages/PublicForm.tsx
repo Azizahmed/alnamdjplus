@@ -4,6 +4,8 @@ import { QuestionRenderer } from '../components/QuestionRenderer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../services/api';
+import { FormHeader } from '../components/FormHeader';
+import { resolveFormTheme } from '../theme/formThemes';
 
 export const PublicForm: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -30,18 +32,21 @@ export const PublicForm: React.FC = () => {
   const autosaveTimerRef = useRef<number | null>(null);
   const autosaveInFlightRef = useRef(false);
 
-  // Extract colors from form settings
-  const backgroundColor = formData?.settings?.background_color || '#ffffff';
-  const textColor = formData?.settings?.text_color || '#1f2937';
-  const accentColor = formData?.settings?.accent_color || '#0E7C86';
-  const boldTextColor = formData?.settings?.bold_text_color || accentColor;
+  // Extract visual theme from form settings
+  const resolvedTheme = resolveFormTheme(formData?.settings || {});
+  const backgroundColor = resolvedTheme.background;
+  const surfaceColor = resolvedTheme.surface;
+  const textColor = resolvedTheme.text;
+  const accentColor = resolvedTheme.accent;
+  const boldTextColor = resolvedTheme.bold;
+  const borderColor = resolvedTheme.border;
+  const fontFamily = resolvedTheme.fontFamily;
   
-  // In review mode, use grayscale colors
   const isAuthenticated = !!localStorage.getItem('auth_token');
-  const displayBackgroundColor = isReviewMode ? '#f5f5f5' : backgroundColor;
-  const displayTextColor = isReviewMode ? '#333333' : textColor;
-  const displayAccentColor = isReviewMode ? '#666666' : accentColor;
-  const displayBoldTextColor = isReviewMode ? '#444444' : boldTextColor;
+  const displayBackgroundColor = backgroundColor;
+  const displayTextColor = textColor;
+  const displayAccentColor = accentColor;
+  const displayBoldTextColor = boldTextColor;
 
   useEffect(() => {
     loadForm();
@@ -328,10 +333,11 @@ export const PublicForm: React.FC = () => {
           maxWidth: '600px',
           width: '100%',
           padding: '60px 40px',
-          background: '#ffffff',
+          background: surfaceColor,
           borderRadius: '12px',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-          textAlign: 'center'
+          textAlign: 'center',
+          fontFamily
         }}>
           <div style={{
             width: '64px',
@@ -373,7 +379,8 @@ export const PublicForm: React.FC = () => {
       background: displayBackgroundColor,
       padding: '40px 24px 40px 64px',
       overflowY: 'auto',
-      position: 'relative'
+      position: 'relative',
+      fontFamily
     }}>
       {/* Back to Builder Button - only shown for authenticated users */}
       {isAuthenticated && (
@@ -466,41 +473,11 @@ export const PublicForm: React.FC = () => {
           marginBottom: '48px',
           paddingTop: '20px'
         }}>
-          <h1 style={{
-            fontSize: '36px',
-            fontWeight: '600',
-            color: displayTextColor,
-            marginBottom: '16px',
-            lineHeight: '1.2'
-          }}>
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ children }) => <span style={{ margin: 0 }}>{children}</span>,
-                strong: ({ children }) => <strong style={{ color: displayBoldTextColor }}>{children}</strong>
-              }}
-            >
-              {formData.title}
-            </ReactMarkdown>
-          </h1>
-          {formData.description && (
-            <div style={{
-              fontSize: '17px',
-              color: displayTextColor,
-              opacity: 0.7,
-              lineHeight: '1.6'
-            }}>
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  p: ({ children }) => <span style={{ margin: 0 }}>{children}</span>,
-                  strong: ({ children }) => <strong style={{ color: displayBoldTextColor }}>{children}</strong>
-                }}
-              >
-                {formData.description}
-              </ReactMarkdown>
-            </div>
-          )}
+          <FormHeader
+            title={formData.title}
+            description={formData.description || ''}
+            settings={formData.settings}
+          />
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -530,7 +507,7 @@ export const PublicForm: React.FC = () => {
                   key={question.id}
                   style={{
                     padding: '48px 0',
-                    borderBottom: index < formData.questions.length - 1 ? '1px solid #e5e7eb' : 'none',
+                    borderBottom: index < formData.questions.length - 1 ? `1px solid ${borderColor}` : 'none',
                     position: 'relative'
                   }}
                 >

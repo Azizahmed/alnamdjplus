@@ -1,4 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { QuestionEditor } from '../QuestionEditor';
 import { LoadingAnimation } from '../LoadingAnimation';
 import { ConditionModal } from '../ConditionModal';
@@ -12,6 +27,10 @@ import { useI18n } from '../../i18n';
 import { api } from '../../services/api';
 import { FormChatPanel } from '../FormChatPanel';
 import { brandTokens, buildPagePresets, normalizeThemeColor, withAlpha } from '../../theme/brand';
+import { FormDesignPanel } from '../FormDesignPanel';
+import { FormHeader } from '../FormHeader';
+import { SortableQuestionBlock } from '../SortableQuestionBlock';
+import { resolveFormTheme } from '../../theme/formThemes';
 
 interface FormBuilderProps {
   formData: any;
@@ -54,6 +73,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   const resolvedText = normalizeThemeColor(globalColors.text, 'text', brandTokens.text);
   const resolvedAccent = normalizeThemeColor(globalColors.accent, 'accent', brandTokens.accent);
   const resolvedBoldText = normalizeThemeColor(globalColors.boldText || globalColors.accent, 'bold', brandTokens.primary);
+  const resolvedTheme = resolveFormTheme(formData.settings || {});
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // Refs for debounced saves
   const pendingQuestionSaves = useRef<Map<string, NodeJS.Timeout>>(new Map());
@@ -144,6 +168,31 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     } catch (err) {
       console.error('Error saving form settings:', err);
     }
+  };
+
+  const handleSettingsPatch = async (patch: Record<string, any>) => {
+    const updatedSettings = {
+      ...formData.settings,
+      ...patch,
+    };
+
+    setFormData((prev: any) => ({ ...prev, settings: updatedSettings }));
+
+    if (
+      patch.background_color ||
+      patch.text_color ||
+      patch.accent_color ||
+      patch.bold_text_color
+    ) {
+      setGlobalColors({
+        background: normalizeThemeColor(updatedSettings.background_color, 'background', brandTokens.surface),
+        text: normalizeThemeColor(updatedSettings.text_color, 'text', brandTokens.text),
+        accent: normalizeThemeColor(updatedSettings.accent_color, 'accent', brandTokens.accent),
+        boldText: normalizeThemeColor(updatedSettings.bold_text_color || updatedSettings.accent_color, 'bold', brandTokens.primary),
+      });
+    }
+
+    await saveFormSettings(updatedSettings);
   };
 
   // Handler when form is updated via chat
@@ -506,6 +555,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
   // Evaluate conditional logic to determine which questions to show
   // In builder view, show all questions (conditional logic applies only in public form)
   const visibleQuestionIds = new Set(formData.questions?.map((q: any) => q.id) || []);
+  const sortedVisibleQuestions = (formData.questions || [])
+    .filter((q: any) => visibleQuestionIds.has(q.id))
+    .sort((a: any, b: any) => a.question_order - b.question_order);
+  const sortableQuestionIds = sortedVisibleQuestions.map((question: any) => String(question.id));
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortableQuestionIds.indexOf(String(active.id));
+    const newIndex = sortableQuestionIds.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reorderedVisible = arrayMove(sortedVisibleQuestions, oldIndex, newIndex).map((question: any, index: number) => ({
+      ...question,
+      order: index,
+      question_order: index,
+    }));
+    const reorderedById = new Map(reorderedVisible.map((question: any) => [question.id, question]));
+    const nextQuestions = formData.questions.map((question: any) => reorderedById.get(question.id) || question);
+
+    setFormData((prev: any) => ({ ...prev, questions: nextQuestions }));
+
+    try {
+      await api.questions.reorder(reorderedVisible.map((question: any) => ({
+        id: question.id,
+        order: question.question_order,
+      })));
+    } catch (err) {
+      console.error('Failed to reorder questions:', err);
+      notification.error('تعذر حفظ ترتيب الأسئلة. تمت إعادة تحميل النموذج.', 'فشل ترتيب الأسئلة');
+      const { data: refreshedForm } = await api.forms.get(formData.id);
+      if (refreshedForm) {
+        setFormData(refreshedForm);
+      }
+    }
+  };
 
   const toolbarButtonBase: React.CSSProperties = {
     minHeight: '42px',
@@ -678,6 +764,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             </svg>
           </button>
 
+          <FormDesignPanel
+            formId={formData.id}
+            settings={formData.settings || {}}
+            onSettingsPatch={handleSettingsPatch}
+          />
+
           {/* Background Color */}
           <div style={{ position: 'relative' }}>
             <button
@@ -788,7 +880,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                 cursor: 'pointer',
                 fontSize: '18px',
                 fontWeight: '700',
-                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontFamily: 'var(--font-arabic)',
                 color: resolvedText
               }}
               title="Text Colors"
@@ -1020,7 +1112,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             display: 'flex',
             flexDirection: 'column',
           position: 'relative',
-          direction: 'rtl'
+          direction: 'rtl',
+          fontFamily: resolvedTheme.fontFamily
           }}>
           {/* Form Title & Description - Sticky at top */}
             <div style={{
@@ -1029,7 +1122,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             background: resolvedBackground,
             zIndex: 5,
             padding: '40px 24px 24px 64px',
-            borderBottom: `1px solid ${brandTokens.border}`,
+            borderBottom: `1px solid ${resolvedTheme.border}`,
             marginBottom: '24px'
           }}>
             <div style={{
@@ -1037,57 +1130,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
               margin: '0 auto',
               width: '100%'
             }}>
-              <InlineEditableText
-                value={formData.title || t.untitledForm}
-                onChange={handleTitleUpdate}
-                placeholder="Form title"
-                isTitle={true}
-                 boldTextColor={resolvedBoldText}
-               style={{
-                   fontSize: '32px',
-                   fontWeight: '700',
-                   color: resolvedText,
-                  lineHeight: '1.2',
-                  marginBottom: '8px',
-                  display: 'block'
-                }}
+              <FormHeader
+                title={formData.title || t.untitledForm}
+                description={formData.description || ''}
+                settings={formData.settings || {}}
+                editable={true}
+                titlePlaceholder="Form title"
+                descriptionPlaceholder={t.addDescription}
+                onTitleChange={handleTitleUpdate}
+                onDescriptionChange={handleDescriptionUpdate}
               />
-              {formData.description && (
-                <InlineEditableText
-                  value={formData.description}
-                  onChange={handleDescriptionUpdate}
-                  placeholder={t.addDescription}
-                  multiline={true}
-                   boldTextColor={resolvedBoldText}
-                   style={{
-                     fontSize: '16px',
-                     color: resolvedText,
-                     opacity: 0.7,
-                    lineHeight: '1.5'
-                  }}
-                />
-              )}
-              {!formData.description && (
-                <div
-              onClick={() => {
-                    // Add description on click
-                    const newDesc = prompt('Add form description:') || '';
-                    if (newDesc) {
-                      handleDescriptionUpdate(newDesc);
-                    }
-                  }}
-              style={{
-                    fontSize: '16px',
-                    color: resolvedText,
-                    opacity: 0.4,
-                    lineHeight: '1.5',
-                    cursor: 'pointer',
-                    fontStyle: 'italic'
-                  }}
-                >
-                  {t.addDescription}
-                </div>
-              )}
           </div>
         </div>
 
@@ -1105,15 +1157,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
             <LoadingAnimation />
           ) : formData.questions && formData.questions.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {formData.questions
-                .filter((q: any) => visibleQuestionIds.has(q.id))
-                .sort((a: any, b: any) => a.question_order - b.question_order)
-                .map((question: any, index: number) => (
-                  <React.Fragment key={question.id}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={sortableQuestionIds} strategy={verticalListSortingStrategy}>
+                  {sortedVisibleQuestions.map((question: any, index: number) => (
+                    <SortableQuestionBlock key={question.id} id={String(question.id)}>
                     <div
                       style={{
                         padding: '48px 0',
-                        borderBottom: index < formData.questions.length - 1 ? `1px solid ${questionColors[question.id]?.border || '#e5e7eb'}` : 'none',
+                        borderBottom: index < formData.questions.length - 1 ? `1px solid ${questionColors[question.id]?.border || resolvedTheme.border}` : 'none',
                         position: 'relative',
                         background: questionColors[question.id]?.background || 'transparent',
                         borderRadius: questionColors[question.id]?.background ? '8px' : '0',
@@ -2056,8 +2111,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                       </div>
                     )}
                   </div>
-                  </React.Fragment>
+                  </SortableQuestionBlock>
                 ))}
+                </SortableContext>
+              </DndContext>
 
                 {/* Side Add Button After Last Question */}
                 {formData.questions && formData.questions.length > 0 && (
