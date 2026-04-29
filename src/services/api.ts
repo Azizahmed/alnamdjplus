@@ -1,14 +1,20 @@
 import { insforge } from '../config';
+import { normalizeQuestion, toQuestionRecord } from './questionMapping';
 
-const normalizeQuestion = (question: any) => ({
-  ...question,
-  type: question.type ?? question.question_type,
-  question_type: question.question_type ?? question.type,
-  label: question.label ?? question.question_text,
-  question_text: question.question_text ?? question.label,
-  order: question.order ?? question.question_order ?? 0,
-  question_order: question.question_order ?? question.order ?? 0,
-});
+const requireCurrentUser = async () => {
+  const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+  if (userError || !userData?.user) {
+    return {
+      data: null,
+      error: {
+        code: 'UNAUTHENTICATED',
+        message: 'Session expired. Please sign in again and try again.',
+      },
+    };
+  }
+
+  return { data: userData.user, error: null };
+};
 
 export const api = {
   auth: {
@@ -125,11 +131,11 @@ export const api = {
     },
 
     create: async (data: { form_id: string; type: string; label: string; description?: string; required?: boolean; order: number; settings?: Record<string, any> }) => {
-      return insforge.database.from('form_questions').insert([data]).select();
+      return insforge.database.from('form_questions').insert([toQuestionRecord(data)]).select();
     },
 
     update: async (questionId: string, data: Record<string, any>) => {
-      return insforge.database.from('form_questions').update(data).eq('id', questionId).select();
+      return insforge.database.from('form_questions').update(toQuestionRecord(data)).eq('id', questionId).select();
     },
 
     delete: async (questionId: string) => {
@@ -252,6 +258,9 @@ export const api = {
     },
 
     send: async (formId: string, message: string, history?: { role: string; content: string }[]) => {
+      const auth = await requireCurrentUser();
+      if (auth.error) return auth;
+
       return insforge.functions.invoke('form-chat', {
         body: { formId, message, history },
       });
@@ -277,6 +286,9 @@ export const api = {
     },
 
     analyzeResponses: async (formId: string, question?: string, history?: { role: string; content: string }[]) => {
+      const auth = await requireCurrentUser();
+      if (auth.error) return auth;
+
       return insforge.functions.invoke('analyze-responses', {
         body: { formId, question, history },
       });
