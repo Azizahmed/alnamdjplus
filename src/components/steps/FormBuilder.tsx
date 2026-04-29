@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -9,7 +9,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -31,6 +30,17 @@ import { FormDesignPanel } from '../FormDesignPanel';
 import { FormHeader } from '../FormHeader';
 import { SortableQuestionBlock } from '../SortableQuestionBlock';
 import { resolveFormTheme } from '../../theme/formThemes';
+import { useFormBuilderPersistence } from '../../hooks/useFormBuilderPersistence';
+import {
+  buildQuestionUpdatePayload,
+  buildReorderPayload,
+  createQuestionDraft,
+  getBuilderVisibleQuestionIds,
+  mergeQuestionInForm,
+  patchQuestionInForm,
+  reorderFormQuestions,
+  sortQuestionsByOrder,
+} from '../../domain/formEditor.ts';
 
 interface FormBuilderProps {
   formData: any;
@@ -79,47 +89,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-
-  // Refs for debounced saves
-  const pendingQuestionSaves = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  const pendingFormSave = useRef<NodeJS.Timeout | null>(null);
-
-  // Save question to backend (debounced)
-  const saveQuestionToBackend = useCallback(async (questionId: string, updates: any) => {
-    try {
-      const { error } = await api.questions.update(questionId, updates);
-      if (error) {
-        console.error('Failed to save question:', error);
-      }
-    } catch (err) {
-      console.error('Failed to save question:', err);
-    }
-  }, []);
-
-  // Save form metadata to backend (debounced)
-  const saveFormMetadataToBackend = useCallback(async (title: string, description: string) => {
-    try {
-      const { error } = await api.forms.update(formData.id, { title, description });
-      if (error) {
-        console.error('Failed to save form metadata:', error);
-      }
-    } catch (err) {
-      console.error('Failed to save form metadata:', err);
-    }
-  }, [formData.id]);
-
-  // Cleanup pending saves on unmount
-  useEffect(() => {
-    return () => {
-      // Clear all pending question saves
-      pendingQuestionSaves.current.forEach((timeout) => clearTimeout(timeout));
-      pendingQuestionSaves.current.clear();
-      // Clear pending form save
-      if (pendingFormSave.current) {
-        clearTimeout(pendingFormSave.current);
-      }
-    };
-  }, []);
+  const {
+    saveFormSettings,
+    queueQuestionSave,
+    queueFormMetadataSave,
+  } = useFormBuilderPersistence(formData.id);
 
   // Handler to open chat and close sidebar
   const handleOpenChat = () => {
@@ -158,18 +132,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       }
     }
   }, [resolvedBackground, resolvedText, resolvedAccent, resolvedBoldText]);
-
-  // Save form settings to backend
-  const saveFormSettings = async (settings: any) => {
-    try {
-      const { error } = await api.forms.update(formData.id, { settings });
-      if (error) {
-        console.error('Failed to save form settings');
-      }
-    } catch (err) {
-      console.error('Error saving form settings:', err);
-    }
-  };
 
   const handleSettingsPatch = async (patch: Record<string, any>) => {
     const updatedSettings = {
@@ -249,9 +211,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
       const { error } = await api.questions.update(selectedQuestion.id, updates);
       if (error) throw new Error('Failed to save question');
 
-      const updatedQuestions = formData.questions.map((q: any) =>
-        q.id === selectedQuestion.id ? { ...q, ...updates } : q
-      );
+      const updatedQuestions = mergeQuestionInForm(formData.questions, selectedQuestion.id, updates);
 
       setFormData({ ...formData, questions: updatedQuestions });
       setSelectedQuestion({ ...selectedQuestion, ...updates });
@@ -308,79 +268,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   // Handle inline editing of question text, description, or options
   const handleInlineQuestionUpdate = (questionId: string, field: string, value: any) => {
-    // Find the current question to build the complete update
-    const question = formData.questions.find((q: any) => q.id === questionId);
-    if (!question) return;
+    const updatedQuestions = patchQuestionInForm(formData.questions, questionId, field, value);
+    const updatedQuestion = updatedQuestions.find((q: any) => String(q.id) === String(questionId));
+    if (!updatedQuestion) return;
 
-    // Build the updated question
-    let updatedQuestion: any;
-    if (field.startsWith('settings.')) {
-      const settingKey = field.split('.')[1];
-      updatedQuestion = { ...question, settings: { ...question.settings, [settingKey]: value } };
-    } else {
-      updatedQuestion = { ...question, [field]: value };
-    }
-
-    // Update local state immediately
-    const updatedQuestions = formData.questions.map((q: any) =>
-      q.id === questionId ? updatedQuestion : q
-    );
     setFormData({ ...formData, questions: updatedQuestions });
 
-    // Debounce the backend save (500ms)
-    const existingTimeout = pendingQuestionSaves.current.get(questionId);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-    
-    const timeoutId = setTimeout(() => {
-      // Build the update payload for the backend
-      const updatePayload: any = {
-        question_text: updatedQuestion.question_text,
-        description: updatedQuestion.description,
-        required: updatedQuestion.required,
-        settings: updatedQuestion.settings
-      };
-      saveQuestionToBackend(questionId, updatePayload);
-      pendingQuestionSaves.current.delete(questionId);
-    }, 500);
-    
-    pendingQuestionSaves.current.set(questionId, timeoutId);
+    queueQuestionSave(questionId, buildQuestionUpdatePayload(updatedQuestion));
   };
 
   // Handle form title update with debounced save
   const handleTitleUpdate = (value: string) => {
     setFormData((prev: any) => ({ ...prev, title: value }));
     
-    // Debounce backend save
-    if (pendingFormSave.current) {
-      clearTimeout(pendingFormSave.current);
-    }
-    pendingFormSave.current = setTimeout(() => {
-      saveFormMetadataToBackend(value, formData.description || '');
-      pendingFormSave.current = null;
-    }, 500);
+    queueFormMetadataSave(value, formData.description || '');
   };
 
   // Handle form description update with debounced save
   const handleDescriptionUpdate = (value: string) => {
     setFormData((prev: any) => ({ ...prev, description: value }));
     
-    // Debounce backend save
-    if (pendingFormSave.current) {
-      clearTimeout(pendingFormSave.current);
-    }
-    pendingFormSave.current = setTimeout(() => {
-      saveFormMetadataToBackend(formData.title || 'Untitled Form', value);
-      pendingFormSave.current = null;
-    }, 500);
+    queueFormMetadataSave(formData.title || 'Untitled Form', value);
   };
 
-  const handleSaveCondition = (condition: any) => {
-    // Add or update conditional rule
-    const existingRules = formData.conditional_rules || [];
-    const updatedRules = [...existingRules, condition];
-    setFormData({ ...formData, conditional_rules: updatedRules });
+  const handleSaveCondition = async (condition: any) => {
+    try {
+      const { data, error } = await api.conditionalRules.create(condition);
+      if (error) throw error;
+
+      const savedRule = Array.isArray(data) ? data[0] : data;
+      const existingRules = formData.conditional_rules || [];
+      setFormData({
+        ...formData,
+        conditional_rules: [...existingRules, savedRule || condition],
+      });
+    } catch (err) {
+      console.error('Failed to save conditional rule:', err);
+      notification.error('تعذر حفظ الشرط. حاول مرة أخرى.', 'فشل حفظ الشرط');
+    }
   };
 
   const handleQuestionColorChange = (questionId: number, colors: any) => {
@@ -424,51 +349,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     }
 
     try {
-      // Determine the question order based on insertion index
-      let questionOrder: number;
-      if (atIndex !== undefined && atIndex !== null && formData.questions?.length > 0) {
-        // Insert at specific position - use the order of the question at that index
-        const sortedQuestions = [...formData.questions].sort((a: any, b: any) => a.question_order - b.question_order);
-        questionOrder = sortedQuestions[atIndex]?.question_order ?? atIndex;
-        
-        // Shift all questions at or after this position
-        // This will be handled by refetching the form
-      } else {
-        // Add at the end
-      const maxOrder = formData.questions?.length > 0
-        ? Math.max(...formData.questions.map((q: any) => q.question_order))
-        : -1;
-        questionOrder = maxOrder + 1;
-      }
-
-      // Use customization data if provided
-      const questionText = customization?.text || 'New Question';
-      const description = customization?.description || '';
-      const customOptions = customization?.options?.filter(o => o.trim());
-
-      // Build settings based on question type
-      let settings: any = {};
-      if (questionType === 'multiple_choice' || questionType === 'checkboxes' || questionType === 'dropdown' || questionType === 'multi_select') {
-        settings = { choices: customOptions?.length ? customOptions : ['Option 1', 'Option 2', 'Option 3'] };
-      } else if (questionType === 'ranking') {
-        settings = { ranking_items: customOptions?.length ? customOptions : ['Item 1', 'Item 2', 'Item 3'] };
-      } else if (questionType === 'matrix') {
-        settings = { rows: ['Row 1', 'Row 2'], columns: ['Column 1', 'Column 2', 'Column 3'] };
-      } else if (questionType === 'linear_scale') {
-        settings = { min_value: 1, max_value: 5, scale_min_label: 'Low', scale_max_label: 'High' };
-      } else if (questionType === 'rating') {
-        settings = { max_value: 5 };
-      }
-
-      const { error: addError } = await api.questions.create({
-        form_id: formData.id,
-        type: questionType,
-        label: questionText,
-        description: description,
-        required: false,
-        order: questionOrder,
-        settings: settings
-      });
+      const { error: addError } = await api.questions.create(createQuestionDraft({
+        formId: formData.id,
+        questionType,
+        currentQuestions: formData.questions || [],
+        atIndex,
+        customization,
+      }));
 
       if (addError) throw new Error('Failed to add question');
       
@@ -558,10 +445,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
 
   // Evaluate conditional logic to determine which questions to show
   // In builder view, show all questions (conditional logic applies only in public form)
-  const visibleQuestionIds = new Set(formData.questions?.map((q: any) => q.id) || []);
-  const sortedVisibleQuestions = (formData.questions || [])
-    .filter((q: any) => visibleQuestionIds.has(q.id))
-    .sort((a: any, b: any) => a.question_order - b.question_order);
+  const visibleQuestionIds = getBuilderVisibleQuestionIds(formData.questions || []);
+  const sortedVisibleQuestions = sortQuestionsByOrder(formData.questions || [])
+    .filter((q: any) => visibleQuestionIds.has(String(q.id)));
   const sortableQuestionIds = sortedVisibleQuestions.map((question: any) => String(question.id));
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -572,21 +458,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
     const newIndex = sortableQuestionIds.indexOf(String(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
 
-    const reorderedVisible = arrayMove(sortedVisibleQuestions, oldIndex, newIndex).map((question: any, index: number) => ({
-      ...question,
-      order: index,
-      question_order: index,
-    }));
-    const reorderedById = new Map(reorderedVisible.map((question: any) => [question.id, question]));
-    const nextQuestions = formData.questions.map((question: any) => reorderedById.get(question.id) || question);
+    const nextQuestions = reorderFormQuestions(formData.questions || [], active.id, over.id);
 
     setFormData((prev: any) => ({ ...prev, questions: nextQuestions }));
 
     try {
-      await api.questions.reorder(reorderedVisible.map((question: any) => ({
-        id: question.id,
-        order: question.question_order,
-      })));
+      await api.questions.reorder(buildReorderPayload(nextQuestions));
     } catch (err) {
       console.error('Failed to reorder questions:', err);
       notification.error('تعذر حفظ ترتيب الأسئلة. تمت إعادة تحميل النموذج.', 'فشل ترتيب الأسئلة');

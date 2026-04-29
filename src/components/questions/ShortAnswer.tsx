@@ -2,11 +2,14 @@
 
 export interface QuestionProps {
   question: {
-    id: number;
+    id: string | number;
+    type?: string;
+    question_type?: string;
     question_text: string;
+    label?: string;
     description?: string;
     required: boolean;
-    settings?: any;
+    settings?: Record<string, any>;
   };
   value: any;
   onChange: (value: any) => void;

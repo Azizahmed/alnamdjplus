@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import Plot from 'react-plotly.js';
 
 // Bar chart data - Tech Startup Valuations
 const barChartData = [
@@ -59,6 +58,191 @@ const hexToRgba = (hex: string, opacity: number): string => {
   const g = parseInt(normalizedHex.substring(2, 4), 16);
   const b = parseInt(normalizedHex.substring(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+const chartPanelStyle = {
+  width: '100%',
+  height: '500px',
+  overflow: 'hidden',
+};
+
+const formatCurrency = (value: number) => `$${value.toLocaleString()}`;
+
+const LightweightBarChart = ({
+  color,
+  textColor,
+}: {
+  color: string;
+  textColor: string;
+}) => {
+  const maxValue = Math.max(...barChartData.map((item) => item.value));
+  const chartHeight = 280;
+  const barWidth = 56;
+  const gap = 22;
+  const left = 76;
+  const top = 92;
+
+  return (
+    <div style={chartPanelStyle}>
+      <svg viewBox="0 0 900 500" role="img" aria-label="Tech startup valuations bar chart" style={{ width: '100%', height: '100%' }}>
+        <text x="450" y="38" textAnchor="middle" fill={textColor} fontSize="22" fontWeight="700">
+          Tech Startup Valuations 2024
+        </text>
+        <text x="22" y="250" transform="rotate(-90 22 250)" fill={hexToRgba(textColor, 0.7)} fontSize="13">
+          Valuation ($ Millions)
+        </text>
+        {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+          const y = top + chartHeight - chartHeight * tick;
+          return (
+            <g key={tick}>
+              <line x1={left} x2="855" y1={y} y2={y} stroke={hexToRgba(textColor, 0.1)} />
+              <text x="64" y={y + 4} textAnchor="end" fill={hexToRgba(textColor, 0.6)} fontSize="11">
+                {formatCurrency(Math.round(maxValue * tick))}
+              </text>
+            </g>
+          );
+        })}
+        {barChartData.map((item, index) => {
+          const height = (item.value / maxValue) * chartHeight;
+          const x = left + index * (barWidth + gap);
+          const y = top + chartHeight - height;
+          return (
+            <g key={item.name}>
+              <rect x={x} y={y} width={barWidth} height={height} rx="8" fill={color}>
+                <title>{`${item.name}: $${item.value}M`}</title>
+              </rect>
+              <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fill={textColor} fontSize="11">
+                ${item.value}M
+              </text>
+              <text x={x + barWidth / 2 - 18} y="420" transform={`rotate(-45 ${x + barWidth / 2 - 18} 420)`} fill={hexToRgba(textColor, 0.75)} fontSize="11">
+                {item.name}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const LightweightScatterChart = ({
+  color,
+  textColor,
+}: {
+  color: string;
+  textColor: string;
+}) => {
+  const xValues = scatterData.map((item) => item.energy);
+  const yValues = scatterData.map((item) => item.gdp);
+  const xMin = Math.min(...xValues);
+  const xMax = Math.max(...xValues);
+  const yMin = Math.min(...yValues);
+  const yMax = Math.max(...yValues);
+  const left = 90;
+  const top = 76;
+  const width = 730;
+  const height = 330;
+  const xScale = (value: number) => left + ((value - xMin) / (xMax - xMin)) * width;
+  const yScale = (value: number) => top + height - ((value - yMin) / (yMax - yMin)) * height;
+
+  return (
+    <div style={chartPanelStyle}>
+      <svg viewBox="0 0 900 500" role="img" aria-label="GDP per capita versus energy use scatter chart" style={{ width: '100%', height: '100%' }}>
+        <text x="450" y="38" textAnchor="middle" fill={textColor} fontSize="22" fontWeight="700">
+          Global Economics: GDP per Capita vs Energy Use
+        </text>
+        <text x="450" y="474" textAnchor="middle" fill={hexToRgba(textColor, 0.7)} fontSize="13">
+          Energy Use per Capita (kg oil equivalent)
+        </text>
+        <text x="26" y="245" transform="rotate(-90 26 245)" fill={hexToRgba(textColor, 0.7)} fontSize="13">
+          GDP per Capita ($)
+        </text>
+        {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+          const x = left + width * tick;
+          const y = top + height - height * tick;
+          return (
+            <g key={tick}>
+              <line x1={x} x2={x} y1={top} y2={top + height} stroke={hexToRgba(textColor, 0.08)} />
+              <line x1={left} x2={left + width} y1={y} y2={y} stroke={hexToRgba(textColor, 0.08)} />
+            </g>
+          );
+        })}
+        {scatterData.map((item) => {
+          const x = xScale(item.energy);
+          const y = yScale(item.gdp);
+          const radius = Math.max(8, Math.sqrt(item.population) * 1.4);
+          return (
+            <g key={item.country}>
+              <circle cx={x} cy={y} r={radius} fill={color}>
+                <title>{`${item.country}: GDP ${formatCurrency(item.gdp)}, energy ${item.energy.toLocaleString()} kg`}</title>
+              </circle>
+              <text x={x} y={y - radius - 6} textAnchor="middle" fill={textColor} fontSize="10">
+                {item.country}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const LightweightTimeSeriesChart = ({
+  color,
+  fillColor,
+  textColor,
+}: {
+  color: string;
+  fillColor: string;
+  textColor: string;
+}) => {
+  const prices = timeSeriesData.map((item) => item.price);
+  const minPrice = Math.min(...prices) - 20;
+  const maxPrice = Math.max(...prices) + 20;
+  const left = 78;
+  const top = 78;
+  const width = 740;
+  const height = 320;
+  const xScale = (index: number) => left + (index / (timeSeriesData.length - 1)) * width;
+  const yScale = (value: number) => top + height - ((value - minPrice) / (maxPrice - minPrice)) * height;
+  const points = timeSeriesData.map((item, index) => `${xScale(index)},${yScale(item.price)}`).join(' ');
+  const areaPoints = `${left},${top + height} ${points} ${left + width},${top + height}`;
+
+  return (
+    <div style={chartPanelStyle}>
+      <svg viewBox="0 0 900 500" role="img" aria-label="Stock market performance line chart" style={{ width: '100%', height: '100%' }}>
+        <text x="450" y="38" textAnchor="middle" fill={textColor} fontSize="22" fontWeight="700">
+          Stock Market Performance: 2024 Trading Year
+        </text>
+        <text x="450" y="466" textAnchor="middle" fill={hexToRgba(textColor, 0.7)} fontSize="13">
+          Month (2024)
+        </text>
+        <text x="24" y="245" transform="rotate(-90 24 245)" fill={hexToRgba(textColor, 0.7)} fontSize="13">
+          Stock Price ($)
+        </text>
+        {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+          const y = top + height - height * tick;
+          return <line key={tick} x1={left} x2={left + width} y1={y} y2={y} stroke={hexToRgba(textColor, 0.1)} />;
+        })}
+        <polygon points={areaPoints} fill={fillColor} />
+        <polyline points={points} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        {timeSeriesData.map((item, index) => {
+          const x = xScale(index);
+          const y = yScale(item.price);
+          return (
+            <g key={item.month}>
+              <circle cx={x} cy={y} r="6" fill={color}>
+                <title>{`${item.month} 2024: $${item.price.toFixed(2)}`}</title>
+              </circle>
+              <text x={x} y="426" textAnchor="middle" fill={hexToRgba(textColor, 0.75)} fontSize="12">
+                {item.month}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
 };
 
 export const DemoVisualization: React.FC = () => {
@@ -138,67 +322,7 @@ export const DemoVisualization: React.FC = () => {
     
     return (
       <div style={containerStyle}>
-        <Plot
-          data={[
-            {
-              type: 'bar',
-              x: barChartData.map(d => d.name),
-              y: barChartData.map(d => d.value),
-              marker: {
-                color: rgbaColor,
-                line: {
-                  width: 0
-                }
-              },
-              hovertemplate: '<b>%{x}</b><br>' +
-                'Valuation: $%{y}M<br>' +
-                '<extra></extra>',
-              text: barChartData.map(d => `$${d.value}M`),
-              textposition: 'outside',
-              textfont: {
-                size: 11,
-                color: containerStyle.color,
-                family: 'inherit'
-              }
-            } as any
-          ]}
-          layout={{
-            title: {
-              text: 'Tech Startup Valuations 2024',
-              font: {
-                size: 20,
-                color: containerStyle.color,
-                family: 'inherit'
-              }
-            },
-            xaxis: {
-              title: '',
-              tickangle: -45,
-              tickfont: { size: 11, color: containerStyle.color },
-              showgrid: false
-            },
-            yaxis: {
-              title: 'Valuation ($ Millions)',
-              titlefont: { size: 13, color: containerStyle.color },
-              tickfont: { size: 11, color: containerStyle.color },
-              gridcolor: 'rgba(0, 0, 0, 0.1)',
-              tickformat: '$,.0f'
-            },
-            plot_bgcolor: 'transparent',
-            paper_bgcolor: 'transparent',
-            margin: { l: 80, r: 40, t: 80, b: 100 },
-            hovermode: 'closest',
-            showlegend: false,
-            height: 500
-          } as any}
-          config={{
-            displayModeBar: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
-            responsive: true
-          }}
-          style={{ width: '100%', height: '500px' }}
-        />
+        <LightweightBarChart color={rgbaColor} textColor={String(containerStyle.color)} />
       </div>
     );
   };
@@ -211,72 +335,7 @@ export const DemoVisualization: React.FC = () => {
     
     return (
       <div style={containerStyle}>
-        <Plot
-          data={[
-            {
-              type: 'scatter',
-              mode: 'markers+text' as any,
-              x: scatterData.map(d => d.energy),
-              y: scatterData.map(d => d.gdp),
-              text: scatterData.map(d => d.country),
-              textposition: 'top center',
-              textfont: {
-                size: 10,
-                color: containerStyle.color,
-                family: 'inherit'
-              },
-              marker: {
-                size: scatterData.map(d => Math.sqrt(d.population) * 3),
-                color: rgbaColor,
-                line: {
-                  width: 0
-                }
-              },
-              hovertemplate: '<b>%{text}</b><br>' +
-                'GDP per Capita: $%{y:,.0f}<br>' +
-                'Energy Use: %{x:,.0f} kg<br>' +
-                '<extra></extra>'
-            } as any
-          ]}
-          layout={{
-            title: {
-              text: 'Global Economics: GDP per Capita vs Energy Use',
-              font: {
-                size: 20,
-                color: containerStyle.color,
-                family: 'inherit'
-              }
-            },
-            xaxis: {
-              title: 'Energy Use per Capita (kg oil equivalent)',
-              titlefont: { size: 13, color: containerStyle.color },
-              tickfont: { size: 11, color: containerStyle.color },
-              gridcolor: 'rgba(0, 0, 0, 0.1)',
-              zeroline: false
-            },
-            yaxis: {
-              title: 'GDP per Capita ($)',
-              titlefont: { size: 13, color: containerStyle.color },
-              tickfont: { size: 11, color: containerStyle.color },
-              gridcolor: 'rgba(0, 0, 0, 0.1)',
-              zeroline: false,
-              tickformat: '$,.0f'
-            },
-            plot_bgcolor: 'transparent',
-            paper_bgcolor: 'transparent',
-            margin: { l: 80, r: 40, t: 80, b: 80 },
-            hovermode: 'closest',
-            showlegend: false,
-            height: 500
-          } as any}
-          config={{
-            displayModeBar: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
-            responsive: true
-          }}
-          style={{ width: '100%', height: '500px' }}
-        />
+        <LightweightScatterChart color={rgbaColor} textColor={String(containerStyle.color)} />
       </div>
     );
   };
@@ -289,67 +348,10 @@ export const DemoVisualization: React.FC = () => {
     
     return (
       <div style={containerStyle}>
-        <Plot
-          data={[
-            {
-              type: 'scatter',
-              mode: 'lines+markers',
-              x: timeSeriesData.map(d => d.month),
-              y: timeSeriesData.map(d => d.price),
-              line: {
-                color: rgbaColor,
-                width: 3
-              },
-              marker: {
-                size: 8,
-                color: rgbaColor,
-                line: {
-                  width: 0
-                }
-              },
-              fill: 'tozeroy',
-              fillcolor: hexToRgba(traceColor, traceOpacity * 0.2),
-              hovertemplate: '<b>%{x} 2024</b><br>' +
-                'Price: $%{y:.2f}<br>' +
-                '<extra></extra>'
-            } as any
-          ]}
-          layout={{
-            title: {
-              text: 'Stock Market Performance: 2024 Trading Year',
-              font: {
-                size: 20,
-                color: containerStyle.color,
-                family: 'inherit'
-              }
-            },
-            xaxis: {
-              title: 'Month (2024)',
-              titlefont: { size: 13, color: containerStyle.color },
-              tickfont: { size: 12, color: containerStyle.color },
-              showgrid: false
-            },
-            yaxis: {
-              title: 'Stock Price ($)',
-              titlefont: { size: 13, color: containerStyle.color },
-              tickfont: { size: 11, color: containerStyle.color },
-              gridcolor: 'rgba(0, 0, 0, 0.1)',
-              tickformat: '$,.2f'
-            },
-            plot_bgcolor: 'transparent',
-            paper_bgcolor: 'transparent',
-            margin: { l: 70, r: 40, t: 80, b: 80 },
-            hovermode: 'closest',
-            showlegend: false,
-            height: 500
-          } as any}
-          config={{
-            displayModeBar: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: ['sendDataToCloud', 'lasso2d', 'select2d'],
-            responsive: true
-          }}
-          style={{ width: '100%', height: '500px' }}
+        <LightweightTimeSeriesChart
+          color={rgbaColor}
+          fillColor={hexToRgba(traceColor, traceOpacity * 0.2)}
+          textColor={String(containerStyle.color)}
         />
       </div>
     );
@@ -1158,7 +1160,7 @@ summary`}
         }}>
           {activeTab === 'analysis' 
             ? 'Interactive notebook showing data analysis with AI-powered insights'
-            : `Hover over ${activeTab === 'bar' ? 'bars' : activeTab === 'scatter' ? 'bubbles' : 'data points'} for detailed insights • Powered by Plotly`}
+            : `Hover over ${activeTab === 'bar' ? 'bars' : activeTab === 'scatter' ? 'bubbles' : 'data points'} for detailed insights`}
         </div>
       </div>
     </div>

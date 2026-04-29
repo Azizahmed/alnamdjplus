@@ -1,20 +1,32 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
-import { Landing } from './components/Landing';
-import { Account } from './components/Account';
-import { PublicForm } from './pages/PublicForm';
-import { FormResponsesNew as FormResponses } from './pages/FormResponsesNew';
-import { FormAnalyticsNew as FormAnalytics } from './pages/FormAnalyticsNew';
-import { FormPlanner } from './components/steps/FormPlanner';
-import { FormBuilder } from './components/steps/FormBuilder';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { I18nProvider } from './i18n';
-import { AuthPage } from './pages/AuthPage';
 import { api } from './services/api';
+
+const Landing = lazy(() => import('./components/Landing').then((module) => ({ default: module.Landing })));
+const Account = lazy(() => import('./components/Account').then((module) => ({ default: module.Account })));
+const PublicForm = lazy(() => import('./pages/PublicForm').then((module) => ({ default: module.PublicForm })));
+const FormResponses = lazy(() => import('./pages/FormResponsesNew').then((module) => ({ default: module.FormResponsesNew })));
+const FormAnalytics = lazy(() => import('./pages/FormAnalyticsNew').then((module) => ({ default: module.FormAnalyticsNew })));
+const FormPlanner = lazy(() => import('./components/steps/FormPlanner').then((module) => ({ default: module.FormPlanner })));
+const FormBuilder = lazy(() => import('./components/steps/FormBuilder').then((module) => ({ default: module.FormBuilder })));
+const AuthPage = lazy(() => import('./pages/AuthPage').then((module) => ({ default: module.AuthPage })));
+
+const PageFallback = () => (
+  <div style={{
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}>
+    <div className="loading-spinner" style={{ width: 40, height: 40 }} />
+  </div>
+);
 
 function FormBuilderPage() {
   const location = useLocation();
@@ -87,9 +99,11 @@ function FormBuilderPage() {
   };
 
   return (
-    <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      {renderStep()}
-    </div>
+    <Suspense fallback={<PageFallback />}>
+      <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {renderStep()}
+      </div>
+    </Suspense>
   );
 }
 
@@ -138,28 +152,30 @@ function AppRoutes() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'row', minHeight: 0 }}>
         {showSidebar && <Sidebar />}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={isAuthenticated ? <Navigate to="/build" replace /> : <AuthPage />} />
-            <Route 
-              path="/build" 
-              element={isAuthenticated ? <FormBuilderPage /> : <Navigate to="/" replace />} 
-            />
-            <Route 
-              path="/forms/:formId/responses" 
-              element={isAuthenticated ? <FormResponses /> : <Navigate to="/" replace />} 
-            />
-            <Route 
-              path="/forms/:formId/analytics" 
-              element={isAuthenticated ? <FormAnalytics /> : <Navigate to="/" replace />} 
-            />
-            <Route path="/forms/:token" element={<PublicForm />} />
-            <Route 
-              path="/account" 
-              element={isAuthenticated ? <Account onClose={() => navigate(-1)} /> : <Navigate to="/" replace />} 
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/auth" element={isAuthenticated ? <Navigate to="/build" replace /> : <AuthPage />} />
+              <Route 
+                path="/build" 
+                element={isAuthenticated ? <FormBuilderPage /> : <Navigate to="/" replace />} 
+              />
+              <Route 
+                path="/forms/:formId/responses" 
+                element={isAuthenticated ? <FormResponses /> : <Navigate to="/" replace />} 
+              />
+              <Route 
+                path="/forms/:formId/analytics" 
+                element={isAuthenticated ? <FormAnalytics /> : <Navigate to="/" replace />} 
+              />
+              <Route path="/forms/:token" element={<PublicForm />} />
+              <Route 
+                path="/account" 
+                element={isAuthenticated ? <Account onClose={() => navigate(-1)} /> : <Navigate to="/" replace />} 
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </div>
     </>

@@ -6,6 +6,12 @@ import remarkGfm from 'remark-gfm';
 import { api } from '../services/api';
 import { FormHeader } from '../components/FormHeader';
 import { resolveFormTheme } from '../theme/formThemes';
+import {
+  buildAnswerPayload,
+  buildMissingRequiredMessage,
+  getVisibleQuestionIds,
+} from '../domain/publicFormRuntime.ts';
+import { getMissingRequiredQuestions } from '../domain/questions.ts';
 
 export const PublicForm: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -13,7 +19,7 @@ export const PublicForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isReviewMode = searchParams.get('review') === 'true';
   const [formData, setFormData] = useState<any>(null);
-  const [answers, setAnswers] = useState<Record<number, any>>({});
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -102,57 +108,13 @@ export const PublicForm: React.FC = () => {
     }
   };
 
-  const evaluateConditionalLogic = () => {
-    const visibleQuestions = new Set<number>();
-
-    formData.questions?.forEach((q: any) => {
-      visibleQuestions.add(q.id);
-    });
-
-    formData.conditional_rules?.forEach((rule: any) => {
-      const triggerAnswer = answers[rule.trigger_question_id];
-      let conditionMet = false;
-
-      if (triggerAnswer) {
-        switch (rule.condition_type) {
-          case 'equals':
-            conditionMet = triggerAnswer.text === rule.condition_value ||
-                          triggerAnswer.number?.toString() === rule.condition_value;
-            break;
-          case 'not_equals':
-            conditionMet = triggerAnswer.text !== rule.condition_value;
-            break;
-          case 'contains':
-            conditionMet = triggerAnswer.text?.includes(rule.condition_value);
-            break;
-          case 'is_not_empty':
-            conditionMet = !!triggerAnswer.text || !!triggerAnswer.number || 
-                          (triggerAnswer.choices && triggerAnswer.choices.length > 0);
-            break;
-          case 'is_empty':
-            conditionMet = !triggerAnswer.text && !triggerAnswer.number && 
-                          (!triggerAnswer.choices || triggerAnswer.choices.length === 0);
-            break;
-        }
-      }
-
-      if (conditionMet) {
-        if (rule.action === 'show') {
-          visibleQuestions.add(rule.target_question_id);
-        } else if (rule.action === 'hide') {
-          visibleQuestions.delete(rule.target_question_id);
-        }
-      } else {
-        if (rule.action === 'show') {
-          visibleQuestions.delete(rule.target_question_id);
-        }
-      }
-    });
-
-    return visibleQuestions;
-  };
-
-  const visibleQuestionIds = formData ? evaluateConditionalLogic() : new Set();
+  const visibleQuestionIds = formData
+    ? getVisibleQuestionIds({
+        questions: formData.questions || [],
+        rules: formData.conditional_rules || [],
+        answers,
+      })
+    : new Set<string>();
 
   const scheduleAutosave = (nextAnswers: Record<string, any>) => {
     if (submitted || submitting || !formData) return;
@@ -166,12 +128,7 @@ export const PublicForm: React.FC = () => {
       
       autosaveInFlightRef.current = true;
       try {
-        const answerArray = Object.entries(nextAnswers).map(([questionId, value]) => ({
-          question_id: questionId,
-          value: value
-        }));
-        
-        await api.responses.submit(token!, answerArray, {
+        await api.responses.submit(token!, buildAnswerPayload(nextAnswers), {
           session_id: sessionId,
           form_version: formData?.version,
           status: 'draft',
@@ -186,7 +143,7 @@ export const PublicForm: React.FC = () => {
     }, 800);
   };
 
-  const handleAnswerChange = (questionId: number, value: any) => {
+  const handleAnswerChange = (questionId: string, value: any) => {
     // Use functional update to ensure we're working with latest state
     // This prevents race conditions when user clicks checkboxes rapidly
     setAnswers(prevAnswers => {
@@ -215,29 +172,14 @@ export const PublicForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const visibleQuestions = formData.questions.filter((q: any) => visibleQuestionIds.has(q.id));
-      const missingRequired = visibleQuestions.filter((q: any) => {
-        if (!q.required) return false;
-        const answer = answers[q.id];
-        if (!answer) return true;
-        
-        if (answer.text !== undefined) return !answer.text;
-        if (answer.number !== undefined) return answer.number === null;
-        if (answer.choices !== undefined) return answer.choices.length === 0;
-        if (answer.rating !== undefined) return !answer.rating;
-        if (answer.files !== undefined) return !answer.files || answer.files.length === 0;
-        
-        return false;
-      });
+    const missingRequired = getMissingRequiredQuestions(
+      formData.questions || [],
+      answers,
+      visibleQuestionIds
+    );
 
     if (missingRequired.length > 0) {
-      const missingNames = missingRequired.map((q: any) => q.label).slice(0, 3);
-      const moreCount = missingRequired.length - 3;
-      let errorMsg = `Please complete: ${missingNames.join(', ')}`;
-      if (moreCount > 0) {
-        errorMsg += ` and ${moreCount} more required field${moreCount > 1 ? 's' : ''}`;
-      }
-      setError(errorMsg);
+      setError(buildMissingRequiredMessage(missingRequired));
       return;
     }
 
@@ -245,12 +187,7 @@ export const PublicForm: React.FC = () => {
     setError('');
 
     try {
-      const answerArray = Object.entries(answers).map(([questionId, value]) => ({
-        question_id: questionId,
-        value: value
-      }));
-
-      const { data, error: submitError } = await api.responses.submit(token!, answerArray, {
+      const { data, error: submitError } = await api.responses.submit(token!, buildAnswerPayload(answers), {
         session_id: sessionId,
         website,
         ...utmParams
@@ -500,7 +437,7 @@ export const PublicForm: React.FC = () => {
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {formData.questions
-              ?.filter((q: any) => visibleQuestionIds.has(q.id))
+              ?.filter((q: any) => visibleQuestionIds.has(String(q.id)))
               .sort((a: any, b: any) => a.question_order - b.question_order)
               .map((question: any, index: number) => (
                 <div
@@ -557,8 +494,8 @@ export const PublicForm: React.FC = () => {
                   <div style={{ marginTop: '8px' }}>
                     <QuestionRenderer
                       question={question}
-                      value={answers[question.id] || {}}
-                      onChange={(value) => handleAnswerChange(question.id, value)}
+                      value={answers[String(question.id)] || {}}
+                      onChange={(value) => handleAnswerChange(String(question.id), value)}
                       disabled={false}
                       hideLabel={true}
                       accentColor={displayAccentColor}

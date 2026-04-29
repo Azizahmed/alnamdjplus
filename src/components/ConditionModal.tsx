@@ -6,7 +6,7 @@ interface ConditionModalProps {
   onClose: () => void;
   question: any;
   formQuestions: any[];
-  onSave: (condition: any) => void;
+  onSave: (condition: any) => void | Promise<void>;
 }
 
 export const ConditionModal: React.FC<ConditionModalProps> = ({
@@ -21,17 +21,19 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
   const [conditionValue, setConditionValue] = useState('');
   const [action, setAction] = useState('show');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!triggerQuestionId) {
       alert('Please select a trigger question');
       return;
     }
 
-    onSave({
-      trigger_question_id: parseInt(triggerQuestionId),
+    await onSave({
+      question_id: triggerQuestionId,
       target_question_id: question.id,
-      condition_type: conditionType,
-      condition_value: conditionValue,
+      condition: {
+        operator: conditionType,
+        value: conditionValue,
+      },
       action: action
     });
 

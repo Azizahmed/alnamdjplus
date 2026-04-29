@@ -1,4 +1,9 @@
-import { normalizeQuestion, toQuestionRecord } from '../src/services/questionMapping';
+import {
+  getMissingRequiredQuestions,
+  hasAnswerValue,
+  normalizeQuestion,
+  toQuestionRecord,
+} from '../src/services/questionMapping.ts';
 
 const assertDeepEqual = (actual: unknown, expected: unknown, message: string) => {
   const stringify = (value: unknown): string => {
@@ -65,4 +70,46 @@ assertDeepEqual(
     },
   },
   'maps UI aliases and generated option settings to database fields'
+);
+
+const normalizedChoiceQuestion = normalizeQuestion({
+  id: 'question-2',
+  question_type: 'multiple_choice',
+  question_text: 'Pick one',
+  question_order: 1,
+  settings: {
+    choices: ['One', 'Two'],
+  },
+});
+
+assertDeepEqual(
+  normalizedChoiceQuestion.settings,
+  { choices: ['One', 'Two'], options: ['One', 'Two'] },
+  'keeps choices and options aliases in sync both ways'
+);
+
+if (hasAnswerValue({ text: '   ' })) {
+  throw new Error('blank text answers should not count as present');
+}
+
+if (!hasAnswerValue({ choices: ['Alpha'] })) {
+  throw new Error('choice answers should count as present');
+}
+
+const missingRequired = getMissingRequiredQuestions(
+  [
+    { id: 'question-1', label: 'Name', required: true },
+    { id: 'question-2', label: 'Preference', required: true },
+    { id: 'question-3', label: 'Optional note', required: false },
+  ],
+  {
+    'question-1': { text: 'Aziz' },
+    'question-2': { text: '' },
+  }
+);
+
+assertDeepEqual(
+  missingRequired.map((question) => question.id),
+  ['question-2'],
+  'finds only visible required questions without answer values'
 );

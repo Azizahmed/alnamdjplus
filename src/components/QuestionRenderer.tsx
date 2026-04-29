@@ -20,10 +20,11 @@ import { Signature } from './questions/Signature';
 import { Ranking } from './questions/Ranking';
 import { WalletConnect } from './questions/WalletConnect';
 import { Button } from './questions/Button';
+import { normalizeQuestion } from '../domain/questions.ts';
 
 interface QuestionRendererProps {
   question: {
-    id: number;
+    id: string | number;
     question_type?: string;
     type?: string;
     question_text: string;
@@ -52,13 +53,21 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   boldTextColor,
   uploadContext
 }) => {
-  const questionType = question.question_type ?? question.type;
+  const normalizedQuestion = normalizeQuestion(question);
+  const questionType = String(normalizedQuestion.question_type ?? normalizedQuestion.type ?? '');
+  const rendererQuestion = {
+    ...normalizedQuestion,
+    id: normalizedQuestion.id as string | number,
+    type: questionType,
+    question_type: questionType,
+    label: String(normalizedQuestion.label ?? normalizedQuestion.question_text ?? ''),
+    question_text: String(normalizedQuestion.question_text ?? normalizedQuestion.label ?? ''),
+    description: normalizedQuestion.description as string | undefined,
+    required: Boolean(normalizedQuestion.required),
+    settings: normalizedQuestion.settings as Record<string, any>,
+  };
   const questionProps = {
-    question: {
-      ...question,
-      question_type: questionType,
-      type: questionType,
-    },
+    question: rendererQuestion,
     value,
     onChange,
     disabled,

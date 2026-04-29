@@ -1,82 +1,16 @@
-import { createClient } from 'https://esm.sh/@insforge/sdk@latest';
-
-const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL') || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const getCorsHeaders = (req: Request) => {
-  const origin = req.headers.get('Origin') || '';
-  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-  const allowOrigin = allowedOrigins.includes(origin) || isLocalhost ? origin : (allowedOrigins[0] || 'null');
-
-  return {
-    'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  };
-};
-
-const createChatCompletion = async (messages: any[], maxTokens: number) => {
-  const apiKey = Deno.env.get('OPENROUTER_API_KEY');
-  const model = Deno.env.get('OPENROUTER_MODEL');
-
-  if (!apiKey) {
-    throw new Error('Missing OPENROUTER_API_KEY secret');
-  }
-  if (!model) {
-    throw new Error('Missing OPENROUTER_MODEL secret');
-  }
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': Deno.env.get('APP_URL') ?? 'https://alnamdjplus.app',
-      'X-Title': 'AlnamdjPlus',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
-  });
-
-  const body = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(body?.error?.message || body?.message || `OpenRouter request failed (${response.status})`);
-  }
-
-  return body;
-};
+import { getCorsHeaders, optionsResponse } from './_shared/http.ts';
+import { createAuthenticatedInsforgeClient } from './_shared/insforge.ts';
+import { createChatCompletion } from './_shared/openrouter.ts';
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: getCorsHeaders(req) });
+    return optionsResponse(req);
   }
 
   const corsHeaders = getCorsHeaders(req);
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    const userToken = authHeader.replace('Bearer ', '');
-
-    const insforge = createClient({
-      baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
-      edgeFunctionToken: userToken,
-    });
-
-    const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
-    if (userError || !userData?.user) {
-      throw new Error('Unauthorized');
-    }
+    const { insforge, user } = await createAuthenticatedInsforgeClient(req);
 
     const { formId, question, history = [] } = await req.json();
 
@@ -88,7 +22,7 @@ export default async function handler(req: Request): Promise<Response> {
       .from('forms')
       .select('id, title, description, form_questions(id, type, label, order, settings)')
       .eq('id', formId)
-      .eq('user_id', userData.user.id);
+      .eq('user_id', user.id);
 
     if (formError || !form?.length) {
       throw new Error('Form not found or access denied');
