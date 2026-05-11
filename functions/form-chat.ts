@@ -340,9 +340,14 @@ Always respond in the same language as the user's message. If the user writes in
       : message === 'Missing formId or message' || message === 'Invalid formId' || message === 'Form not found or access denied'
         ? 400
         : 500;
+    const code = status === 401
+      ? 'UNAUTHORIZED'
+      : status === 400
+        ? 'BAD_REQUEST'
+        : 'FUNCTION_ERROR';
 
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: code, message, statusCode: status }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status,

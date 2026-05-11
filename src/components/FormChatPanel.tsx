@@ -57,6 +57,15 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const getChatErrorMessage = (error: any, data?: any) => {
+    if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+    if (typeof data?.error === 'string' && data.error.trim()) return data.error;
+    if (typeof error?.message === 'string' && error.message.trim()) return error.message;
+    if (typeof error?.error === 'string' && error.error.trim()) return error.error;
+    if (typeof error?.details === 'string' && error.details.trim()) return error.details;
+    return 'تعذر إرسال الرسالة. حاول مرة أخرى.';
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -137,7 +146,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
       const { data, error } = await api.chat.send(String(formId), userMessage, history, mode);
-      if (error) throw new Error(error.message || 'Chat failed');
+      if (error || data?.error) throw new Error(getChatErrorMessage(error, data));
       
       const assistantMessage = data?.message || 'No response';
       setMessages(prev => [...prev, { 
@@ -560,7 +569,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               minHeight: '56px',
               maxHeight: '120px',
               padding: '14px 16px',
-              paddingInlineStart: '62px',
+              paddingLeft: '62px',
+              paddingRight: '16px',
               fontSize: '14px',
               fontFamily: 'inherit',
               border: '1px solid #e5e7eb',
@@ -589,7 +599,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
             style={{
               position: 'absolute',
               bottom: '12px',
-              insetInlineStart: '12px',
+              left: '12px',
+              right: 'auto',
               width: '38px',
               height: '38px',
               borderRadius: '10px',

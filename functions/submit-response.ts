@@ -276,6 +276,10 @@ export default async function handler(req: Request): Promise<Response> {
       status,
     });
   } catch (error) {
-    return jsonResponse(req, { error: error instanceof Error ? error.message : 'Submission failed' }, 400);
+    return jsonResponse(req, {
+      error: 'SUBMISSION_FAILED',
+      message: error instanceof Error ? error.message : 'Submission failed',
+      statusCode: 400,
+    }, 400);
   }
 }
