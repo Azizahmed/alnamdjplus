@@ -2532,9 +2532,9 @@ select:focus-visible {
 .sidebar-form-item {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
-  min-height: 62px;
+  min-height: 84px;
   padding: 12px;
   border: 1px solid transparent;
   border-radius: 12px;
@@ -2556,7 +2556,8 @@ select:focus-visible {
 
 .sidebar-form-color {
   width: 10px;
-  height: 38px;
+  min-height: 38px;
+  align-self: stretch;
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -2564,28 +2565,54 @@ select:focus-visible {
 .sidebar-form-info {
   min-width: 0;
   flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-form-meta {
+  width: 84px;
+  flex: 0 0 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  direction: ltr;
 }
 
 .sidebar-form-actions {
+  width: 74px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
-  flex-shrink: 0;
 }
 
 .sidebar-form-title {
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.45;
   color: var(--text);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sidebar-form-date {
-  margin-top: 4px;
+  width: 84px;
+  margin-top: 6px;
   font-size: 12px;
+  line-height: 1.4;
   color: var(--text-muted);
+  direction: rtl;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .redesigned-landing {
@@ -4396,4 +4423,3 @@ select:focus-visible {
 .landing-steps.in { transition-delay: 0.05s; }
 .landing-stats.in { transition-delay: 0.05s; }
 .landing-final-cta.in { transition-delay: 0.05s; }
-

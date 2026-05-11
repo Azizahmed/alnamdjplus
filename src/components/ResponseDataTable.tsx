@@ -499,6 +499,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
       <div style={{
         padding: '24px',
         textAlign: 'center',
+        direction: 'rtl',
         color: '#6b7280',
         fontSize: '14px',
         background: '#f9fafb',
@@ -516,7 +517,9 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
       border: '1px solid #e5e7eb',
       borderRadius: '10px',
       overflow: 'hidden',
-      background: '#ffffff'
+      background: '#ffffff',
+      direction: 'rtl',
+      textAlign: 'right'
     }}>
       {/* View Toggle */}
       {(isChartable || isCombinationData) && (
@@ -525,7 +528,8 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
           borderBottom: '1px solid #e5e7eb',
           background: '#E7F5F4',
           display: 'flex',
-          gap: '4px'
+          gap: '4px',
+          justifyContent: 'flex-start'
         }}>
           <button
             onClick={() => setViewMode('table')}
@@ -631,7 +635,7 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
                   key={idx}
                   style={{
                     padding: '10px 14px',
-                    textAlign: 'left',
+                    textAlign: 'right',
                     fontWeight: '600',
                     fontSize: '11px',
                     textTransform: 'uppercase',
@@ -670,7 +674,8 @@ export const ResponseDataTable: React.FC<ResponseDataTableProps> = ({
                       color: '#374151',
                       maxWidth: '200px',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      textAlign: 'right'
                     }}
                   >
                     {formatCellValue(row[col], col)}

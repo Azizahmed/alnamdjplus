@@ -5,23 +5,23 @@ import { FormChatPanel } from '../components/FormChatPanel';
 import { useSidebar } from '../contexts/SidebarContext';
 
 interface Response {
-  id: number;
+  id: string;
   submitted_at: string;
   status: string;
   ip_address?: string;
   country?: string;
   answers: Array<{
-    question_id: number;
+    question_id: string;
     question_text: string;
     answer_value: any;
   }>;
 }
 
 interface FormData {
-  id: number;
+  id: string;
   title: string;
   questions: Array<{
-    id: number;
+    id: string;
     question_text: string;
     question_type: string;
   }>;
@@ -78,8 +78,34 @@ export const FormResponsesNew: React.FC = () => {
       setLoading(true);
       const { data, error } = await api.responses.list(formId!);
       if (error) throw new Error('Failed to load responses');
-      
-      const sortedResponses = (data || []).sort((a: Response, b: Response) => 
+
+      const questionTextById = new Map(
+        (formData?.questions || []).map((question) => [String(question.id), question.question_text])
+      );
+
+      const normalizedResponses: Response[] = (data || []).map((response: any) => {
+        const rawAnswers = Array.isArray(response.answers)
+          ? response.answers
+          : Array.isArray(response.response_answers)
+            ? response.response_answers
+            : [];
+
+        return {
+          ...response,
+          id: String(response.id),
+          answers: rawAnswers.map((answer: any) => {
+            const questionId = String(answer.question_id);
+
+            return {
+              question_id: questionId,
+              question_text: answer.question_text || questionTextById.get(questionId) || 'سؤال غير معروف',
+              answer_value: answer.answer_value ?? answer.value,
+            };
+          }),
+        };
+      });
+
+      const sortedResponses = normalizedResponses.sort((a: Response, b: Response) => 
         new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
       );
       
@@ -252,11 +278,14 @@ export const FormResponsesNew: React.FC = () => {
     return truncateText(fallbackText);
   };
 
+  const isCompletedResponse = (status?: string) => status === 'completed' || status === 'complete';
+  const isPartialResponse = (status?: string) => status === 'draft' || status === 'partial' || status === 'in_progress';
+
   // Filter responses by status
   const filteredResponses = responses.filter(response => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'complete') return response.status === 'complete';
-    if (activeTab === 'partial') return response.status === 'partial' || response.status === 'in_progress';
+    if (activeTab === 'complete') return isCompletedResponse(response.status);
+    if (activeTab === 'partial') return isPartialResponse(response.status);
     return true;
   });
 
@@ -422,7 +451,7 @@ export const FormResponsesNew: React.FC = () => {
       {/* Inline Chat Panel */}
       {showChat && (
         <FormChatPanel
-          formId={parseInt(formId || '0')}
+          formId={formId || ''}
           isOpen={true}
           onClose={() => setShowChat(false)}
           mode="responses"
@@ -503,7 +532,7 @@ export const FormResponsesNew: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <div style={{
                 fontSize: '14px',
                 fontWeight: '600',
@@ -515,58 +544,84 @@ export const FormResponsesNew: React.FC = () => {
               }}>
                 {totalCount} ردود
               </div>
-              
+
               <button
-              onClick={() => handleExport('csv')}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: 'white',
-                background: '#0E7C86',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                transition: 'all 0.15s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#123A3F';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#0E7C86';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              ↓ تصدير ملف إكسل
-            </button>
-            <button
-              onClick={() => handleExport('json')}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#6b7280',
-                background: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                transition: 'all 0.15s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              ↓ تصدير ملف جيسون
-            </button>
-          </div>
+                onClick={() => navigate(`/forms/${formId}/data-analysis`)}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#0E7C86',
+                  background: '#E7F5F4',
+                  border: '1px solid #D9E4E1',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#D9E4E1';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#E7F5F4';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                تحليل البيانات
+              </button>
+
+              <button
+                onClick={() => handleExport('csv')}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'white',
+                  background: '#0E7C86',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#123A3F';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#0E7C86';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                ↓ تصدير ملف إكسل
+              </button>
+              <button
+                onClick={() => handleExport('json')}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#6b7280',
+                  background: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                ↓ تصدير ملف جيسون
+              </button>
+            </div>
         </div>
 
         {/* Tabs */}
@@ -581,8 +636,8 @@ export const FormResponsesNew: React.FC = () => {
         }}>
           {[
             { key: 'all' as const, label: 'الكل', count: responses.length },
-            { key: 'complete' as const, label: 'مكتملة', count: responses.filter(r => r.status === 'complete').length },
-            { key: 'partial' as const, label: 'جزئية', count: responses.filter(r => r.status === 'partial' || r.status === 'in_progress').length }
+            { key: 'complete' as const, label: 'مكتملة', count: responses.filter(r => isCompletedResponse(r.status)).length },
+            { key: 'partial' as const, label: 'جزئية', count: responses.filter(r => isPartialResponse(r.status)).length }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -739,7 +794,7 @@ export const FormResponsesNew: React.FC = () => {
                         borderInlineStart: '1px solid #e5e7eb'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {activeTab === 'all' && response.status !== 'complete' && (
+                          {activeTab === 'all' && !isCompletedResponse(response.status) && (
                             <span
                               title="رد جزئي"
                               style={{
@@ -766,7 +821,7 @@ export const FormResponsesNew: React.FC = () => {
                         </div>
                       </td>
                       {formData?.questions.map((question) => {
-                        const answer = response.answers.find((a) => a.question_id === question.id);
+                        const answer = response.answers.find((a) => a.question_id === String(question.id));
                         return (
                           <td
                             key={question.id}
@@ -1014,7 +1069,7 @@ export const FormResponsesNew: React.FC = () => {
               flexDirection: 'column',
               gap: '20px'
             }}>
-              {selectedResponse.answers.map((answer, index) => (
+              {(selectedResponse.answers || []).map((answer, index) => (
                 <div key={index} style={{
                   padding: '20px',
                   background: '#fafafa',

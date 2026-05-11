@@ -156,48 +156,56 @@ export const Sidebar: React.FC = () => {
           </div>
         ) : (
           <div className="sidebar-forms-list">
-            {forms.map(form => (
-              <div
-                key={form.id}
-                className={`sidebar-form-item ${isFormActive(form.id) ? 'active' : ''}`}
-                onClick={() => handleFormClick(form.id)}
-                onMouseEnter={() => setHoveredForm(form.id)}
-                onMouseLeave={() => setHoveredForm(null)}
-              >
-                <div className="sidebar-form-color" style={{ backgroundColor: getFormAccent(form) }} />
-                <div className="sidebar-form-info">
-                  <div className="sidebar-form-title">{form.title}</div>
-                  <div className="sidebar-form-date">{formatDate(form.updated_at)}</div>
-                </div>
-                {hoveredForm === form.id && (
-                  <div className="sidebar-form-actions">
-                    <button
-                      onClick={(e) => handleEditForm(form.id, e)}
-                      className="sidebar-action-btn sidebar-edit-btn"
-                      title="تعديل النموذج"
-                      aria-label="تعديل النموذج"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteForm(form.id, form.title, e)}
-                      className="sidebar-action-btn sidebar-delete-btn"
-                      disabled={deletingFormId === form.id}
-                      title="حذف النموذج"
-                      aria-label="حذف النموذج"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
+            {forms.map(form => {
+              const actionsVisible = hoveredForm === form.id;
+
+              return (
+                <div
+                  key={form.id}
+                  className={`sidebar-form-item ${isFormActive(form.id) ? 'active' : ''}`}
+                  onClick={() => handleFormClick(form.id)}
+                  onMouseEnter={() => setHoveredForm(form.id)}
+                  onMouseLeave={() => setHoveredForm(null)}
+                >
+                  <div className="sidebar-form-color" style={{ backgroundColor: getFormAccent(form) }} />
+                  <div className="sidebar-form-info">
+                    <div className="sidebar-form-title">{form.title}</div>
                   </div>
-                )}
-              </div>
-            ))}
+                  <div className="sidebar-form-meta">
+                    <div className="sidebar-form-actions">
+                      {actionsVisible && (
+                        <>
+                          <button
+                            onClick={(e) => handleEditForm(form.id, e)}
+                            className="sidebar-action-btn sidebar-edit-btn"
+                            title="تعديل النموذج"
+                            aria-label="تعديل النموذج"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteForm(form.id, form.title, e)}
+                            className="sidebar-action-btn sidebar-delete-btn"
+                            disabled={deletingFormId === form.id}
+                            title="حذف النموذج"
+                            aria-label="حذف النموذج"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M3 6h18" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <div className="sidebar-form-date">{formatDate(form.updated_at)}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

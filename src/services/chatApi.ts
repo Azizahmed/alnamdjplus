@@ -5,12 +5,17 @@ export const chatApi = {
     return insforge.database.from('chat_messages').select().eq('form_id', formId).order('created_at', { ascending: true });
   },
 
-  send: async (formId: string, message: string, history?: { role: string; content: string }[]) => {
+  send: async (
+    formId: string,
+    message: string,
+    history?: { role: string; content: string }[],
+    mode?: 'builder' | 'analytics' | 'responses'
+  ) => {
     const auth = await requireCurrentUser();
     if (auth.error) return auth;
 
     return insforge.functions.invoke('form-chat', {
-      body: { formId, message, history },
+      body: { formId, message, history, mode },
     });
   },
 };

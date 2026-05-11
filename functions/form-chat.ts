@@ -1,6 +1,24 @@
 import { getCorsHeaders, optionsResponse } from './_shared/http.ts';
-import { createAuthenticatedInsforgeClient } from './_shared/insforge.ts';
+import { createAuthenticatedInsforgeClient, createPublicInsforgeClient } from './_shared/insforge.ts';
 import { createChatCompletion } from './_shared/openrouter.ts';
+
+const createAssistantCompletion = async (messages: any[], maxTokens: number) => {
+  const aiClient = createPublicInsforgeClient();
+  const insforgeModel = Deno.env.get('INSFORGE_AI_MODEL') || 'moonshotai/kimi-k2.5';
+
+  try {
+    return await aiClient.ai.chat.completions.create({
+      model: insforgeModel,
+      messages,
+      temperature: 0.7,
+      maxTokens,
+    });
+  } catch (insforgeAiError) {
+    console.error('InsForge AI request failed, trying OpenRouter fallback:', insforgeAiError);
+  }
+
+  return createChatCompletion(messages, { maxTokens, temperature: 0.7 });
+};
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -12,10 +30,14 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     const { insforge, user } = await createAuthenticatedInsforgeClient(req);
 
-    const { formId, message, history = [] } = await req.json();
+    const { formId, message, history = [], mode = 'builder' } = await req.json();
 
     if (!formId || !message) {
       throw new Error('Missing formId or message');
+    }
+
+    if (typeof formId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(formId)) {
+      throw new Error('Invalid formId');
     }
 
     const { data: form, error: formError } = await insforge.database
@@ -31,6 +53,7 @@ export default async function handler(req: Request): Promise<Response> {
     const formData = form[0];
     const questions = (formData.form_questions || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
     const questionIds = questions.map((q: any) => q.id);
+    const isResponseMode = mode === 'responses' || mode === 'analytics';
 
     let conditionalRules: any[] = [];
     if (questionIds.length > 0) {
@@ -59,7 +82,55 @@ ${conditionalRules.map((r: any) => {
 }).join('\n') || 'No conditional rules'}
 `;
 
-    const systemPrompt = `You are an AI assistant helping to build and manage forms. You have access to the following form data:
+    let responseContext = '';
+    if (isResponseMode) {
+      const { data: responses, error: responsesError } = await insforge.database
+        .from('form_responses')
+        .select('id, submitted_at, status, response_answers(question_id, value)')
+        .eq('form_id', formId)
+        .order('submitted_at', { ascending: false })
+        .limit(200);
+
+      if (responsesError) {
+        throw new Error(responsesError.message || 'Failed to load responses');
+      }
+
+      const completedResponses = (responses || []).filter((response: any) => response.status === 'completed');
+      const questionStats = questions.map((question: any) => {
+        const values = (responses || [])
+          .flatMap((response: any) => response.response_answers || [])
+          .filter((answer: any) => answer.question_id === question.id)
+          .map((answer: any) => answer.value);
+
+        return {
+          label: question.label,
+          type: question.type,
+          total_answers: values.length,
+          sample_values: values.slice(0, 8),
+          unique_values: new Set(values.map((value: any) => JSON.stringify(value))).size,
+        };
+      });
+
+      responseContext = `
+Response Data:
+- Total responses loaded: ${(responses || []).length}
+- Completed responses: ${completedResponses.length}
+- Draft/partial responses: ${(responses || []).length - completedResponses.length}
+- Latest response timestamps: ${(responses || []).slice(0, 5).map((response: any) => `${response.submitted_at} (${response.status})`).join(', ') || 'None'}
+
+Question answer summaries:
+${questionStats.map((stats: any) => `- ${stats.label} (${stats.type}): ${stats.total_answers} answers, ${stats.unique_values} unique values. Samples: ${JSON.stringify(stats.sample_values)}`).join('\n') || 'No answers yet'}
+`;
+    }
+
+    const systemPrompt = isResponseMode
+      ? `You are an AI data analyst helping analyze form responses. You have access to this form and response data:
+
+${formContext}
+${responseContext}
+
+Answer questions about the response results, patterns, summaries, completion state, and notable insights. Do not suggest editing the form unless the user explicitly asks for improvement ideas. Always respond in the same language as the user's message. If the user writes in Arabic, respond in Arabic.`
+      : `You are an AI assistant helping to build and manage forms. You have access to the following form data:
 
 ${formContext}
 
@@ -101,11 +172,11 @@ Always respond in the same language as the user's message. If the user writes in
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...history.map((h: any) => ({ role: h.role, content: h.content })),
+      ...history.slice(-12).map((h: any) => ({ role: h.role, content: h.content })),
       { role: 'user', content: message },
     ];
 
-    const aiResponse = await createChatCompletion(messages, 2000);
+    const aiResponse = await createAssistantCompletion(messages, isResponseMode ? 3000 : 2000);
 
     const assistantMessage = aiResponse.choices?.[0]?.message?.content;
     if (!assistantMessage) {
@@ -128,7 +199,7 @@ Always respond in the same language as the user's message. If the user writes in
     } catch (e) {
     }
 
-    if (action) {
+    if (action && !isResponseMode) {
       switch (action.action) {
         case 'add_question': {
           const maxOrder = Math.max(...(questions.map((q: any) => q.order) || [-1]));
@@ -182,7 +253,7 @@ Always respond in the same language as the user's message. If the user writes in
     const message = error instanceof Error ? error.message : 'Unknown error';
     const status = message === 'Unauthorized' || message === 'Missing authorization header'
       ? 401
-      : message === 'Missing formId or message'
+      : message === 'Missing formId or message' || message === 'Invalid formId' || message === 'Form not found or access denied'
         ? 400
         : 500;
 

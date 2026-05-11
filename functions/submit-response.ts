@@ -158,25 +158,21 @@ export default async function handler(req: Request): Promise<Response> {
       form_version: metadata.form_version,
     };
 
-    const { data: response, error: responseError } = await insforge.database
+    const responseId = crypto.randomUUID();
+    const { error: responseError } = await insforge.database
       .from('form_responses')
       .insert([{
+        id: responseId,
         form_id: formId,
         status,
         ip_hash: ipAddress,
         geo: {},
         utm: metadata.utm || {},
         metadata: responseMetadata,
-      }])
-      .select();
+      }]);
 
     if (responseError) {
       throw new Error(responseError.message);
-    }
-
-    const responseId = response?.[0]?.id;
-    if (!responseId) {
-      throw new Error('Failed to create response');
     }
 
     if (answers.length > 0) {

@@ -13,6 +13,7 @@ const Account = lazy(() => import('./components/Account').then((module) => ({ de
 const PublicForm = lazy(() => import('./pages/PublicForm').then((module) => ({ default: module.PublicForm })));
 const FormResponses = lazy(() => import('./pages/FormResponsesNew').then((module) => ({ default: module.FormResponsesNew })));
 const FormAnalytics = lazy(() => import('./pages/FormAnalyticsNew').then((module) => ({ default: module.FormAnalyticsNew })));
+const FormDataAnalysis = lazy(() => import('./pages/FormDataAnalysis').then((module) => ({ default: module.FormDataAnalysis })));
 const FormPlanner = lazy(() => import('./components/steps/FormPlanner').then((module) => ({ default: module.FormPlanner })));
 const FormBuilder = lazy(() => import('./components/steps/FormBuilder').then((module) => ({ default: module.FormBuilder })));
 const AuthPage = lazy(() => import('./pages/AuthPage').then((module) => ({ default: module.AuthPage })));
@@ -115,7 +116,7 @@ function AppRoutes() {
   const isPublicFormPath = /^\/forms\/[^/]+$/.test(location.pathname);
   const isProtectedPath = location.pathname === '/build'
     || location.pathname === '/account'
-    || /^\/forms\/[^/]+\/(responses|analytics)$/.test(location.pathname);
+    || /^\/forms\/[^/]+\/(responses|analytics|data-analysis)$/.test(location.pathname);
   const hasOAuthCallback = location.search.includes('insforge_code=');
   const shouldCheckAuth = (isProtectedPath || hasOAuthCallback) && !isAuthenticated && !hasCheckedUser;
   
@@ -167,6 +168,10 @@ function AppRoutes() {
               <Route 
                 path="/forms/:formId/analytics" 
                 element={isAuthenticated ? <FormAnalytics /> : <Navigate to="/" replace />} 
+              />
+              <Route 
+                path="/forms/:formId/data-analysis" 
+                element={isAuthenticated ? <FormDataAnalysis /> : <Navigate to="/" replace />} 
               />
               <Route path="/forms/:token" element={<PublicForm />} />
               <Route 

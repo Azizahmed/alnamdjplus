@@ -18,7 +18,7 @@ interface ChatMessage {
 }
 
 interface FormChatPanelProps {
-  formId: number;
+  formId: string | number;
   isOpen: boolean;
   onClose: () => void;
   onFormUpdated?: () => void;
@@ -135,7 +135,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     setStreamingData(null);
 
     try {
-      const { data, error } = await api.chat.send(String(formId), userMessage);
+      const history = messages.map(({ role, content }) => ({ role, content }));
+      const { data, error } = await api.chat.send(String(formId), userMessage, history, mode);
       if (error) throw new Error(error.message || 'Chat failed');
       
       const assistantMessage = data?.message || 'No response';
@@ -201,7 +202,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     flexDirection: 'column',
     flexShrink: 0,
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    direction: 'rtl'
   };
 
   // Fixed position mode - renders as overlay
@@ -219,7 +221,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     zIndex: 1000,
     display: 'flex',
     flexDirection: 'column',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    direction: 'rtl'
   };
 
   const fixedBottomStyle: React.CSSProperties = {
@@ -233,7 +236,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
     boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
     zIndex: 1000,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    direction: 'rtl'
   };
 
   const panelStyle: React.CSSProperties = inline 
@@ -299,7 +303,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
         background: '#E7F5F4',
         flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           <div style={{
             width: '32px',
             height: '32px',
@@ -313,7 +317,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <div>
+          <div style={{ textAlign: 'right', minWidth: 0 }}>
             <div style={{ fontWeight: '600', fontSize: '15px', color: '#111827' }}>
               {getTitle()}
             </div>
@@ -380,7 +384,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
         padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px'
+        gap: '16px',
+        direction: 'rtl'
       }}>
         {messages.length === 0 && !isStreaming && (
           <div style={{
@@ -416,12 +421,14 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
         )}
 
         {messages.map((msg, idx) => (
-          <div key={idx}>
+          <div key={idx} style={{ direction: 'rtl' }}>
             <div style={{
               padding: '12px 16px',
               borderRadius: '10px',
               background: msg.role === 'user' ? '#E7F5F4' : '#f9fafb',
-              border: `1px solid ${msg.role === 'user' ? '#D9E4E1' : '#e5e7eb'}`
+              border: `1px solid ${msg.role === 'user' ? '#D9E4E1' : '#e5e7eb'}`,
+              direction: 'rtl',
+              textAlign: 'right'
             }}>
               <div style={{
                 fontSize: '11px',
@@ -433,11 +440,11 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               }}>
                 {msg.role === 'user' ? t.you : t.assistant}
               </div>
-              <div style={{ fontSize: '14px', color: '#1f2937', lineHeight: '1.6' }}>
+              <div style={{ fontSize: '14px', color: '#1f2937', lineHeight: '1.6', direction: 'rtl', textAlign: 'right' }}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    p: ({ children }) => <div style={{ margin: '0 0 8px 0' }}>{children}</div>,
+                    p: ({ children }) => <div style={{ margin: '0 0 8px 0', direction: 'rtl', textAlign: 'right' }}>{children}</div>,
                     strong: ({ children }) => <strong style={{ fontWeight: '600', color: resolvedAccentColor }}>{children}</strong>,
                     em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
                     code: ({ children }) => (
@@ -446,15 +453,17 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
                         padding: '2px 6px',
                         borderRadius: '4px',
                         fontSize: '13px',
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
+                        direction: 'ltr',
+                        unicodeBidi: 'embed'
                       }}>
                         {children}
                       </code>
                     ),
-                    ul: ({ children }) => <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>{children}</ul>,
-                    ol: ({ children }) => <ol style={{ margin: '4px 0', paddingLeft: '20px' }}>{children}</ol>,
+                    ul: ({ children }) => <ul style={{ margin: '4px 0', paddingRight: '20px', paddingLeft: 0 }}>{children}</ul>,
+                    ol: ({ children }) => <ol style={{ margin: '4px 0', paddingRight: '20px', paddingLeft: 0 }}>{children}</ol>,
                     li: ({ children }) => <li style={{ margin: '2px 0' }}>{children}</li>,
-                    h3: ({ children }) => <h3 style={{ fontSize: '14px', fontWeight: '600', margin: '12px 0 8px', color: '#111827' }}>{children}</h3>
+                    h3: ({ children }) => <h3 style={{ fontSize: '14px', fontWeight: '600', margin: '12px 0 8px', color: '#111827', textAlign: 'right' }}>{children}</h3>
                   }}
                 >
                   {msg.content}
@@ -475,12 +484,14 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
 
         {/* Streaming message */}
         {isStreaming && (
-          <div>
+          <div style={{ direction: 'rtl' }}>
             <div style={{
               padding: '12px 16px',
               borderRadius: '10px',
               background: '#f9fafb',
-              border: '1px solid #e5e7eb'
+              border: '1px solid #e5e7eb',
+              direction: 'rtl',
+              textAlign: 'right'
             }}>
               <div style={{
                 fontSize: '11px',
@@ -493,7 +504,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
                 {t.assistant}
               </div>
               {streamingContent ? (
-                <div style={{ fontSize: '14px', color: '#1f2937', lineHeight: '1.6' }}>
+                <div style={{ fontSize: '14px', color: '#1f2937', lineHeight: '1.6', direction: 'rtl', textAlign: 'right' }}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {streamingContent}
                   </ReactMarkdown>
@@ -507,7 +518,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
                   }} />
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-start' }}>
                   <div className="loading-spinner" style={{ width: 16, height: 16 }} />
                   <span style={{ fontSize: '14px', color: '#6b7280' }}>{t.thinking}</span>
                 </div>
@@ -535,7 +546,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
         background: '#ffffff',
         flexShrink: 0
       }}>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', direction: 'rtl' }}>
           <textarea
             ref={inputRef}
             value={input}
@@ -548,7 +559,8 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
               boxSizing: 'border-box',
               minHeight: '56px',
               maxHeight: '120px',
-              padding: '14px 16px 14px 62px',
+              padding: '14px 16px',
+              paddingInlineStart: '62px',
               fontSize: '14px',
               fontFamily: 'inherit',
               border: '1px solid #e5e7eb',
