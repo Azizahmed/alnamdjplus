@@ -1,6 +1,90 @@
-import { getCorsHeaders, optionsResponse } from './_shared/http.ts';
-import { createAuthenticatedInsforgeClient, createPublicInsforgeClient } from './_shared/insforge.ts';
-import { createChatCompletion } from './_shared/openrouter.ts';
+import { createClient } from 'https://esm.sh/@insforge/sdk@latest';
+
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL') || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get('Origin') || '';
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allowOrigin = allowedOrigins.includes(origin) || isLocalhost
+    ? origin
+    : (allowedOrigins[0] || 'null');
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+};
+
+const optionsResponse = (req: Request) =>
+  new Response(null, { status: 204, headers: getCorsHeaders(req) });
+
+const createPublicInsforgeClient = () =>
+  createClient({
+    baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+    anonKey: Deno.env.get('ANON_KEY') ?? '',
+  });
+
+const createAuthenticatedInsforgeClient = async (req: Request) => {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    throw new Error('Missing authorization header');
+  }
+
+  const insforge = createClient({
+    baseUrl: Deno.env.get('INSFORGE_BASE_URL') ?? '',
+    edgeFunctionToken: authHeader.replace('Bearer ', ''),
+  });
+
+  const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+  if (userError || !userData?.user) {
+    throw new Error('Unauthorized');
+  }
+
+  return {
+    insforge,
+    user: userData.user,
+  };
+};
+
+const createOpenRouterCompletion = async (messages: any[], maxTokens: number) => {
+  const apiKey = Deno.env.get('OPENROUTER_API_KEY');
+  const model = Deno.env.get('OPENROUTER_MODEL');
+
+  if (!apiKey) {
+    throw new Error('Missing OPENROUTER_API_KEY secret');
+  }
+  if (!model) {
+    throw new Error('Missing OPENROUTER_MODEL secret');
+  }
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': Deno.env.get('APP_URL') ?? 'https://alnamdjplus.app',
+      'X-Title': 'AlnamdjPlus',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    }),
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error?.message || body?.message || `OpenRouter request failed (${response.status})`);
+  }
+
+  return body;
+};
 
 const createAssistantCompletion = async (messages: any[], maxTokens: number) => {
   const aiClient = createPublicInsforgeClient();
@@ -17,7 +101,7 @@ const createAssistantCompletion = async (messages: any[], maxTokens: number) => 
     console.error('InsForge AI request failed, trying OpenRouter fallback:', insforgeAiError);
   }
 
-  return createChatCompletion(messages, { maxTokens, temperature: 0.7 });
+  return createOpenRouterCompletion(messages, maxTokens);
 };
 
 export default async function handler(req: Request): Promise<Response> {
