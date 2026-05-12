@@ -114,13 +114,19 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     const { insforge, user } = await createAuthenticatedInsforgeClient(req);
 
-    const { formId, message, history = [], mode = 'builder' } = await req.json();
+    const { formId: rawFormId, message, history = [], mode = 'builder' } = await req.json();
+    const formId = String(rawFormId ?? '').trim();
 
     if (!formId || !message) {
       throw new Error('Missing formId or message');
     }
 
-    if (typeof formId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(formId)) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(formId)) {
+      console.error('Invalid form-chat formId', {
+        type: typeof rawFormId,
+        value: String(rawFormId ?? '').slice(0, 80),
+        mode,
+      });
       throw new Error('Invalid formId');
     }
 

@@ -29,6 +29,20 @@ interface FormChatPanelProps {
   inline?: boolean; // When true, renders as flex child instead of fixed position
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+
+const resolveChatFormId = (formId: string | number) => {
+  const directFormId = String(formId ?? '').trim();
+  if (UUID_PATTERN.test(directFormId)) return directFormId;
+
+  if (typeof window !== 'undefined') {
+    const routeFormId = window.location.pathname.match(/^\/forms\/([^/]+)(?:\/|$)/)?.[1] ?? '';
+    if (UUID_PATTERN.test(routeFormId)) return routeFormId;
+  }
+
+  return directFormId;
+};
+
 /**
  * Shared chat panel component with streaming support.
  * Can be used in FormBuilder, FormAnalytics, and FormResponses pages.
@@ -145,7 +159,7 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
 
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
-      const { data, error } = await api.chat.send(String(formId), userMessage, history, mode);
+      const { data, error } = await api.chat.send(resolveChatFormId(formId), userMessage, history, mode);
       if (error || data?.error) throw new Error(getChatErrorMessage(error, data));
       
       const assistantMessage = data?.message || 'No response';
