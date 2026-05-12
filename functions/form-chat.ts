@@ -6,6 +6,44 @@ const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL
   .filter(Boolean);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const QUESTION_TYPES = new Set([
+  'short_answer',
+  'long_answer',
+  'multiple_choice',
+  'checkboxes',
+  'dropdown',
+  'multi_select',
+  'number',
+  'email',
+  'phone',
+  'link',
+  'file_upload',
+  'date',
+  'time',
+  'linear_scale',
+  'matrix',
+  'rating',
+  'signature',
+  'ranking',
+]);
+const SELECTABLE_TYPES = new Set(['multiple_choice', 'checkboxes', 'dropdown', 'multi_select']);
+const ACTION_ALIASES: Record<string, string> = {
+  add_field: 'add_question',
+  create_question: 'add_question',
+  create_field: 'add_question',
+  update_question: 'edit_question',
+  modify_question: 'edit_question',
+  edit_field: 'edit_question',
+  update_field: 'edit_question',
+  delete_field: 'delete_question',
+  remove_question: 'delete_question',
+  remove_field: 'delete_question',
+  update_form_metadata: 'update_form',
+  add_condition: 'add_rule',
+  create_rule: 'add_rule',
+  delete_condition: 'delete_rule',
+  remove_rule: 'delete_rule',
+};
 
 const getCorsHeaders = (req: Request) => {
   const origin = req.headers.get('Origin') || '';
@@ -106,6 +144,450 @@ const createAssistantCompletion = async (messages: any[], maxTokens: number) => 
   return createOpenRouterCompletion(messages, maxTokens);
 };
 
+const isRecord = (value: unknown): value is Record<string, any> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const firstString = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+};
+
+const normalizeQuestionType = (value: unknown) => {
+  const questionType = typeof value === 'string' ? value.trim() : '';
+  return QUESTION_TYPES.has(questionType) ? questionType : 'short_answer';
+};
+
+const normalizeOptionList = (value: unknown) =>
+  Array.isArray(value)
+    ? value.map((option) => String(option).trim()).filter(Boolean)
+    : [];
+
+const normalizeQuestionSettings = (
+  questionType: string,
+  settingsValue: unknown,
+  sourceValue: Record<string, any> = {}
+) => {
+  const settings = isRecord(settingsValue) ? { ...settingsValue } : {};
+  const options = [
+    ...normalizeOptionList(sourceValue.options),
+    ...normalizeOptionList(sourceValue.choices),
+    ...normalizeOptionList(settings.options),
+    ...normalizeOptionList(settings.choices),
+  ];
+  const uniqueOptions = [...new Set(options)];
+
+  if (uniqueOptions.length > 0) {
+    settings.choices = uniqueOptions;
+    settings.options = uniqueOptions;
+  } else if (SELECTABLE_TYPES.has(questionType)) {
+    settings.choices = ['Option 1', 'Option 2', 'Option 3'];
+    settings.options = settings.choices;
+  }
+
+  if (questionType === 'ranking' && !Array.isArray(settings.ranking_items)) {
+    settings.ranking_items = uniqueOptions.length > 0 ? uniqueOptions : ['Item 1', 'Item 2', 'Item 3'];
+  }
+
+  if (questionType === 'matrix') {
+    if (!Array.isArray(settings.rows)) settings.rows = ['Row 1', 'Row 2'];
+    if (!Array.isArray(settings.columns)) settings.columns = ['Column 1', 'Column 2', 'Column 3'];
+  }
+
+  if (questionType === 'linear_scale') {
+    if (settings.min_value === undefined) settings.min_value = 1;
+    if (settings.max_value === undefined) settings.max_value = 5;
+  }
+
+  if (questionType === 'rating' && settings.max_value === undefined) {
+    settings.max_value = 5;
+  }
+
+  return settings;
+};
+
+const getQuestionLabel = (question: any) => String(question?.label || '').trim();
+
+const resolveQuestion = (
+  questions: any[],
+  data: Record<string, any>,
+  idKeys = ['question_id', 'id', 'target_question_id'],
+  labelKeys = ['question_label', 'target_label', 'current_label']
+) => {
+  const questionId = firstString(...idKeys.map((key) => data[key]));
+  if (questionId) {
+    const match = questions.find((question) => String(question.id) === questionId);
+    if (match) return match;
+  }
+
+  const label = firstString(...labelKeys.map((key) => data[key]));
+  if (!label) return null;
+
+  const normalizedLabel = label.toLocaleLowerCase();
+  return questions.find((question) => getQuestionLabel(question).toLocaleLowerCase() === normalizedLabel)
+    || questions.find((question) => getQuestionLabel(question).toLocaleLowerCase().includes(normalizedLabel));
+};
+
+const normalizeQuestionUpdatePayload = (data: Record<string, any>, currentType: string) => {
+  const source = isRecord(data.updates) ? data.updates : data;
+  const updates: Record<string, any> = {};
+  const nextType = source.type || source.question_type;
+  const questionType = nextType ? normalizeQuestionType(nextType) : currentType;
+  const label = firstString(source.label, source.question_text, source.text, source.title);
+
+  if (label) updates.label = label;
+  if ('description' in source) updates.description = source.description || null;
+  if ('required' in source) updates.required = Boolean(source.required);
+  if (nextType) updates.type = questionType;
+  if (Number.isFinite(Number(source.order))) updates.order = Number(source.order);
+
+  const hasSettingsPatch = isRecord(source.settings)
+    || 'options' in source
+    || 'choices' in source
+    || 'rows' in source
+    || 'columns' in source
+    || 'ranking_items' in source
+    || 'min_value' in source
+    || 'max_value' in source;
+
+  if (hasSettingsPatch) {
+    updates.settings = normalizeQuestionSettings(questionType, source.settings, source);
+  }
+
+  return updates;
+};
+
+const assertDbSuccess = (result: any, fallbackMessage: string) => {
+  if (result?.error) {
+    throw new Error(result.error.message || fallbackMessage);
+  }
+};
+
+const extractJsonSnippets = (text: string) => {
+  const snippets: string[] = [];
+
+  for (let start = 0; start < text.length; start += 1) {
+    const opener = text[start];
+    if (opener !== '{' && opener !== '[') continue;
+
+    const stack = [opener];
+    let inString = false;
+    let escaped = false;
+
+    for (let index = start + 1; index < text.length; index += 1) {
+      const char = text[index];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+
+      if (inString) continue;
+
+      if (char === '{' || char === '[') {
+        stack.push(char);
+      } else if (char === '}' || char === ']') {
+        const expected = char === '}' ? '{' : '[';
+        if (stack[stack.length - 1] !== expected) break;
+
+        stack.pop();
+        if (stack.length === 0) {
+          snippets.push(text.slice(start, index + 1));
+          start = index;
+          break;
+        }
+      }
+    }
+  }
+
+  return snippets;
+};
+
+const actionsFromParsedJson = (parsed: any) => {
+  if (Array.isArray(parsed)) return parsed;
+  if (isRecord(parsed) && Array.isArray(parsed.actions)) return parsed.actions;
+  if (isRecord(parsed) && parsed.action) return [parsed];
+  return [];
+};
+
+const normalizeAction = (rawAction: any) => {
+  if (!isRecord(rawAction)) return null;
+
+  const rawName = String(rawAction.action || rawAction.type || rawAction.name || '').trim().toLocaleLowerCase();
+  const action = ACTION_ALIASES[rawName] || rawName;
+  const data = isRecord(rawAction.data) ? rawAction.data : rawAction;
+
+  if (!action) return null;
+  return { action, data };
+};
+
+const parseAssistantActions = (assistantMessage: string) => {
+  const candidates: string[] = [];
+  const taggedMatches = assistantMessage.matchAll(/<form_actions>([\s\S]*?)<\/form_actions>/gi);
+  for (const match of taggedMatches) candidates.push(match[1]);
+
+  const fencedMatches = assistantMessage.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi);
+  for (const match of fencedMatches) candidates.push(match[1]);
+
+  candidates.push(...extractJsonSnippets(assistantMessage));
+
+  for (const candidate of candidates) {
+    try {
+      const actions = actionsFromParsedJson(JSON.parse(candidate.trim()))
+        .map(normalizeAction)
+        .filter(Boolean);
+
+      if (actions.length > 0) return actions;
+    } catch (_error) {
+    }
+  }
+
+  return [];
+};
+
+const removeActionMarkup = (assistantMessage: string, hasActions: boolean) => {
+  let cleaned = assistantMessage
+    .replace(/<form_actions>[\s\S]*?<\/form_actions>/gi, '')
+    .replace(/```(?:json)?\s*([\s\S]*?)```/gi, (match, inner) => {
+      try {
+        return actionsFromParsedJson(JSON.parse(inner.trim())).length > 0 ? '' : match;
+      } catch (_error) {
+        return match;
+      }
+    })
+    .trim();
+
+  if (hasActions) {
+    for (const snippet of extractJsonSnippets(cleaned)) {
+      try {
+        if (actionsFromParsedJson(JSON.parse(snippet.trim())).length > 0) {
+          cleaned = cleaned.replace(snippet, '').trim();
+        }
+      } catch (_error) {
+      }
+    }
+
+    try {
+      if (actionsFromParsedJson(JSON.parse(cleaned || 'null')).length > 0) {
+        cleaned = '';
+      }
+    } catch (_error) {
+    }
+  }
+
+  return cleaned;
+};
+
+const buildActionConfirmation = (actions: any[], userMessage: string) => {
+  const isArabic = /[\u0600-\u06FF]/.test(userMessage);
+  if (!isArabic) return actions.length > 1 ? 'Done. I updated the form.' : 'Done. I updated the form.';
+
+  if (actions.length !== 1) return 'تم تحديث النموذج.';
+
+  switch (actions[0].action) {
+    case 'add_question':
+      return 'تمت إضافة السؤال إلى النموذج.';
+    case 'edit_question':
+      return 'تم تعديل السؤال في النموذج.';
+    case 'delete_question':
+      return 'تم حذف السؤال من النموذج.';
+    case 'update_form':
+      return 'تم تحديث بيانات النموذج.';
+    case 'add_rule':
+      return 'تمت إضافة الشرط إلى النموذج.';
+    case 'delete_rule':
+      return 'تم حذف الشرط من النموذج.';
+    default:
+      return 'تم تحديث النموذج.';
+  }
+};
+
+const applyFormAction = async (
+  insforge: any,
+  formId: string,
+  userId: string,
+  questions: any[],
+  conditionalRules: any[],
+  normalizedAction: { action: string; data: Record<string, any> }
+) => {
+  const { action, data } = normalizedAction;
+
+  switch (action) {
+    case 'add_question': {
+      const questionType = normalizeQuestionType(data.type || data.question_type);
+      const label = firstString(data.label, data.question_text, data.text, data.title) || 'New Question';
+      const order = Number.isFinite(Number(data.order))
+        ? Number(data.order)
+        : Math.max(-1, ...questions.map((question) => Number(question.order ?? 0))) + 1;
+      const payload = {
+        form_id: formId,
+        type: questionType,
+        label,
+        description: data.description || null,
+        required: Boolean(data.required),
+        order,
+        settings: normalizeQuestionSettings(questionType, data.settings, data),
+      };
+      const result = await insforge.database.from('form_questions').insert([payload]).select();
+      assertDbSuccess(result, 'Failed to add question');
+
+      const createdQuestion = Array.isArray(result.data) ? result.data[0] : result.data;
+      if (createdQuestion) questions.push(createdQuestion);
+      return { action, question_id: createdQuestion?.id, label };
+    }
+
+    case 'edit_question': {
+      const targetQuestion = resolveQuestion(questions, data);
+      if (!targetQuestion) throw new Error('Question not found for edit action');
+
+      const updates = normalizeQuestionUpdatePayload(data, targetQuestion.type || 'short_answer');
+      if (Object.keys(updates).length === 0) {
+        throw new Error('No supported question updates were provided');
+      }
+
+      const result = await insforge.database
+        .from('form_questions')
+        .update(updates)
+        .eq('id', targetQuestion.id)
+        .eq('form_id', formId)
+        .select();
+      assertDbSuccess(result, 'Failed to edit question');
+      Object.assign(targetQuestion, updates);
+
+      return { action, question_id: targetQuestion.id, updates };
+    }
+
+    case 'delete_question': {
+      const targetQuestion = resolveQuestion(
+        questions,
+        data,
+        ['question_id', 'id', 'target_question_id'],
+        ['question_label', 'target_label', 'label', 'question_text', 'text']
+      );
+      if (!targetQuestion) throw new Error('Question not found for delete action');
+
+      const result = await insforge.database
+        .from('form_questions')
+        .delete()
+        .eq('id', targetQuestion.id)
+        .eq('form_id', formId);
+      assertDbSuccess(result, 'Failed to delete question');
+
+      const questionIndex = questions.findIndex((question) => String(question.id) === String(targetQuestion.id));
+      if (questionIndex >= 0) questions.splice(questionIndex, 1);
+
+      return { action, question_id: targetQuestion.id, label: targetQuestion.label };
+    }
+
+    case 'update_form': {
+      const updates: Record<string, any> = {};
+      const title = firstString(data.title, data.name);
+      const description = firstString(data.description);
+
+      if (title) updates.title = title;
+      if ('description' in data) updates.description = description || null;
+      if (isRecord(data.settings)) updates.settings = data.settings;
+      if (Object.keys(updates).length === 0) throw new Error('No supported form updates were provided');
+
+      const result = await insforge.database
+        .from('forms')
+        .update(updates)
+        .eq('id', formId)
+        .eq('user_id', userId)
+        .select();
+      assertDbSuccess(result, 'Failed to update form');
+
+      return { action, updates };
+    }
+
+    case 'add_rule': {
+      const sourceQuestion = resolveQuestion(
+        questions,
+        data,
+        ['source_question_id', 'question_id'],
+        ['source_question_label', 'source_label', 'question_label']
+      );
+      const targetQuestion = resolveQuestion(
+        questions,
+        data,
+        ['target_question_id'],
+        ['target_question_label', 'target_label']
+      );
+
+      if (!sourceQuestion || !targetQuestion) throw new Error('Question not found for conditional rule');
+      if (!isRecord(data.condition)) throw new Error('Conditional rule is missing a valid condition');
+
+      const result = await insforge.database
+        .from('conditional_rules')
+        .insert([{
+          question_id: sourceQuestion.id,
+          target_question_id: targetQuestion.id,
+          condition: data.condition,
+          action: data.rule_action || data.visibility_action || data.action || 'show',
+        }])
+        .select();
+      assertDbSuccess(result, 'Failed to add conditional rule');
+
+      const createdRule = Array.isArray(result.data) ? result.data[0] : result.data;
+      if (createdRule) conditionalRules.push(createdRule);
+
+      return { action, rule_id: createdRule?.id };
+    }
+
+    case 'delete_rule': {
+      const ruleId = firstString(data.rule_id, data.id);
+      const sourceQuestion = resolveQuestion(
+        questions,
+        data,
+        ['source_question_id', 'question_id'],
+        ['source_question_label', 'source_label', 'question_label']
+      );
+      const targetQuestion = resolveQuestion(
+        questions,
+        data,
+        ['target_question_id'],
+        ['target_question_label', 'target_label']
+      );
+      const targetRule = ruleId
+        ? conditionalRules.find((rule) => String(rule.id) === ruleId)
+        : conditionalRules.find((rule) =>
+          (!sourceQuestion || rule.question_id === sourceQuestion.id)
+          && (!targetQuestion || rule.target_question_id === targetQuestion.id)
+        );
+
+      if (!targetRule) throw new Error('Conditional rule not found for delete action');
+
+      const result = await insforge.database
+        .from('conditional_rules')
+        .delete()
+        .eq('id', targetRule.id);
+      assertDbSuccess(result, 'Failed to delete conditional rule');
+
+      const ruleIndex = conditionalRules.findIndex((rule) => String(rule.id) === String(targetRule.id));
+      if (ruleIndex >= 0) conditionalRules.splice(ruleIndex, 1);
+
+      return { action, rule_id: targetRule.id };
+    }
+
+    default:
+      throw new Error(`Unsupported form action: ${action}`);
+  }
+};
+
 export default async function handler(req: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
 
@@ -178,12 +660,12 @@ export default async function handler(req: Request): Promise<Response> {
 Form: ${formData.title}
 Description: ${formData.description || 'No description'}
 Questions:
-${questions.map((q: any) => `- ${(q.order ?? 0) + 1}. ${q.label} (${q.type})${q.required ? ' [Required]' : ''}${q.description ? ` - ${q.description}` : ''}`).join('\n') || 'No questions'}
+${questions.map((q: any) => `- order: ${q.order ?? 0}, question_id: ${q.id}, label: "${q.label}", type: ${q.type}, required: ${Boolean(q.required)}, description: ${q.description ? `"${q.description}"` : 'none'}, settings: ${JSON.stringify(q.settings || {})}`).join('\n') || 'No questions'}
 Conditional Rules:
 ${conditionalRules.map((r: any) => {
   const sourceQ = questions.find((q: any) => q.id === r.question_id);
   const targetQ = questions.find((q: any) => q.id === r.target_question_id);
-  return `- ${sourceQ?.label || 'Unknown'} ${r.action === 'show' ? 'shows' : 'hides'} ${targetQ?.label || 'Unknown'} when ${JSON.stringify(r.condition)}`;
+  return `- rule_id: ${r.id}, source_question_id: ${r.question_id}, source_label: "${sourceQ?.label || 'Unknown'}", target_question_id: ${r.target_question_id}, target_label: "${targetQ?.label || 'Unknown'}", visibility_action: ${r.action}, condition: ${JSON.stringify(r.condition)}`;
 }).join('\n') || 'No conditional rules'}
 `;
 
@@ -242,32 +724,27 @@ ${formContext}
 You can help with:
 1. Adding new questions to the form
 2. Modifying existing questions
-3. Adding conditional logic
-4. Analyzing form structure
-5. Suggesting improvements
+3. Deleting existing questions
+4. Updating the form title/description
+5. Adding or deleting conditional logic
+6. Analyzing form structure and suggesting improvements
 
-When the user asks to add or modify questions, respond with a JSON action block:
-{
-  "action": "add_question|edit_question|add_rule",
-  "data": {
-    // For add_question:
-    "type": "question_type",
-    "label": "Question label",
-    "description": "Optional description",
-    "required": true/false,
-    "settings": {}
-    
-    // For edit_question:
-    "question_id": "uuid",
-    "updates": { "label": "new label", ... }
-    
-    // For add_rule:
-    "source_question_id": "uuid",
-    "target_question_id": "uuid",
-    "condition": { ... },
-    "action": "show|hide"
-  }
-}
+When the user asks to change the form, include a valid JSON action block at the end of your reply using exactly this wrapper:
+<form_actions>
+{"actions":[{"action":"add_question|edit_question|delete_question|update_form|add_rule|delete_rule","data":{}}]}
+</form_actions>
+
+Rules for form actions:
+- Use only valid JSON: no comments, no Markdown inside the action block.
+- For existing questions, always use the exact question_id from the context. Do not invent IDs.
+- Supported question types: short_answer, long_answer, multiple_choice, checkboxes, dropdown, multi_select, number, email, phone, link, file_upload, date, time, linear_scale, matrix, rating, signature, ranking.
+- add_question data: type, label, description, required, settings, options or choices.
+- edit_question data: question_id, updates. Supported updates: label, description, required, type, order, settings, options or choices.
+- delete_question data: question_id.
+- update_form data: title, description, settings.
+- add_rule data: source_question_id, target_question_id, condition, visibility_action ("show" or "hide").
+- delete_rule data: rule_id.
+- If the user is only asking a question or for advice, do not include form_actions.
 
 Always respond in the same language as the user's message. If the user writes in Arabic, respond in Arabic.`;
 
@@ -288,65 +765,34 @@ Always respond in the same language as the user's message. If the user writes in
       throw new Error('No response from AI');
     }
 
+    const requestedActions = isResponseMode ? [] : parseAssistantActions(assistantMessage);
+    const appliedActions: any[] = [];
+
+    for (const requestedAction of requestedActions) {
+      appliedActions.push(await applyFormAction(
+        insforge,
+        formId,
+        user.id,
+        questions,
+        conditionalRules,
+        requestedAction
+      ));
+    }
+
+    const cleanedAssistantMessage = requestedActions.length > 0
+      ? removeActionMarkup(assistantMessage, true) || buildActionConfirmation(appliedActions, message)
+      : assistantMessage;
+
     await insforge.database
       .from('chat_messages')
-      .insert([{ form_id: formId, user_id: user.id, role: 'assistant', content: assistantMessage }]);
-
-    let action = null;
-    try {
-      const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.action && parsed.data) {
-          action = parsed;
-        }
-      }
-    } catch (e) {
-    }
-
-    if (action && !isResponseMode) {
-      switch (action.action) {
-        case 'add_question': {
-          const maxOrder = Math.max(...(questions.map((q: any) => q.order) || [-1]));
-          await insforge.database
-            .from('form_questions')
-            .insert([{
-              form_id: formId,
-              type: action.data.type,
-              label: action.data.label,
-              description: action.data.description || null,
-              required: action.data.required || false,
-              order: maxOrder + 1,
-              settings: action.data.settings || {},
-            }]);
-          break;
-        }
-        case 'edit_question': {
-          await insforge.database
-            .from('form_questions')
-            .update(action.data.updates)
-            .eq('id', action.data.question_id);
-          break;
-        }
-        case 'add_rule': {
-          await insforge.database
-            .from('conditional_rules')
-            .insert([{
-              question_id: action.data.source_question_id,
-              target_question_id: action.data.target_question_id,
-              condition: action.data.condition,
-              action: action.data.action,
-            }]);
-          break;
-        }
-      }
-    }
+      .insert([{ form_id: formId, user_id: user.id, role: 'assistant', content: cleanedAssistantMessage }]);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: assistantMessage,
-        action: action,
+        message: cleanedAssistantMessage,
+        action: appliedActions[0] || null,
+        actions: appliedActions,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
