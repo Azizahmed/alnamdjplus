@@ -5,6 +5,8 @@ const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('APP_URL
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const getCorsHeaders = (req: Request) => {
   const origin = req.headers.get('Origin') || '';
   const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -105,6 +107,8 @@ const createAssistantCompletion = async (messages: any[], maxTokens: number) => 
 };
 
 export default async function handler(req: Request): Promise<Response> {
+  const requestId = crypto.randomUUID();
+
   if (req.method === 'OPTIONS') {
     return optionsResponse(req);
   }
@@ -116,13 +120,24 @@ export default async function handler(req: Request): Promise<Response> {
 
     const { formId: rawFormId, message, history = [], mode = 'builder' } = await req.json();
     const formId = String(rawFormId ?? '').trim();
+    console.log('form-chat request', {
+      requestId,
+      formId,
+      rawFormIdType: typeof rawFormId,
+      formIdValid: UUID_PATTERN.test(formId),
+      mode,
+      messageType: typeof message,
+      messageLength: typeof message === 'string' ? message.length : null,
+      historyCount: Array.isArray(history) ? history.length : null,
+    });
 
     if (!formId || !message) {
       throw new Error('Missing formId or message');
     }
 
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(formId)) {
+    if (!UUID_PATTERN.test(formId)) {
       console.error('Invalid form-chat formId', {
+        requestId,
         type: typeof rawFormId,
         value: String(rawFormId ?? '').slice(0, 80),
         mode,
@@ -339,7 +354,7 @@ Always respond in the same language as the user's message. If the user writes in
       }
     );
   } catch (error) {
-    console.error('form-chat failed:', error);
+    console.error('form-chat failed:', { requestId, error });
     const message = error instanceof Error ? error.message : 'Unknown error';
     const status = message === 'Unauthorized' || message === 'Missing authorization header'
       ? 401
@@ -353,7 +368,7 @@ Always respond in the same language as the user's message. If the user writes in
         : 'FUNCTION_ERROR';
 
     return new Response(
-      JSON.stringify({ error: code, message, statusCode: status }),
+      JSON.stringify({ error: code, message, statusCode: status, requestId }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status,

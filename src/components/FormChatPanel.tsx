@@ -29,7 +29,7 @@ interface FormChatPanelProps {
   inline?: boolean; // When true, renders as flex child instead of fixed position
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const resolveChatFormId = (formId: string | number) => {
   const directFormId = String(formId ?? '').trim();
@@ -159,7 +159,15 @@ export const FormChatPanel: React.FC<FormChatPanelProps> = ({
 
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
-      const { data, error } = await api.chat.send(resolveChatFormId(formId), userMessage, history, mode);
+      const chatFormId = resolveChatFormId(formId);
+      console.info('[FormChatPanel] form-chat request', {
+        propFormId: formId,
+        resolvedFormId: chatFormId,
+        pathname: window.location.pathname,
+        mode,
+      });
+
+      const { data, error } = await api.chat.send(chatFormId, userMessage, history, mode);
       if (error || data?.error) throw new Error(getChatErrorMessage(error, data));
       
       const assistantMessage = data?.message || 'No response';
