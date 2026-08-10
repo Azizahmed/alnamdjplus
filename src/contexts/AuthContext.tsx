@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async () => {
-    const { data, error } = await insforge.auth.signInWithOAuth({ provider: 'google' });
+    const { data, error } = await insforge.auth.signInWithOAuth('google', { redirectTo: window.location.href });
     if (error) throw new Error(error.message);
     if (data?.url) {
       window.location.href = data.url;
