@@ -19,7 +19,7 @@ export const FileUpload: React.FC<QuestionProps> = ({
   const fileName = value?.text || value?.files?.[0]?.filename || value?.files?.[0]?.original_filename || '';
   const acceptedTypes = question.settings?.file_types?.join(',') || '*';
   const maxSize = question.settings?.max_file_size || 10485760; // 10MB default
-  const allowedTypes = Array.isArray(question.settings?.file_types) ? question.settings.file_types : [];
+  const allowedTypes = Array.isArray(question.settings?.file_types) ? question.settings!.file_types : [];
 
   const sanitizeFileName = (name: string) =>
     name
@@ -31,12 +31,12 @@ export const FileUpload: React.FC<QuestionProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > maxSize) {
-        alert(`File size must be less than ${(maxSize / 1048576).toFixed(1)}MB`);
+        alert(`يجب ألا يتجاوز حجم الملف ${(maxSize / 1048576).toFixed(1)} ميجابايت`);
         return;
       }
 
       if (allowedTypes.length > 0 && file.type && !allowedTypes.includes(file.type)) {
-        alert('This file type is not allowed');
+        alert('نوع الملف غير مسموح به');
         return;
       }
 
@@ -65,7 +65,7 @@ export const FileUpload: React.FC<QuestionProps> = ({
           ]
         });
       } catch (err: any) {
-        setUploadError(err.message || 'Upload failed');
+        setUploadError(err.message || 'تعذّر رفع الملف');
       } finally {
         setIsUploading(false);
       }
@@ -131,7 +131,7 @@ export const FileUpload: React.FC<QuestionProps> = ({
           onMouseEnter={(e) => (!disabled && !isUploading) && (e.currentTarget.style.background = `${effectiveAccent}10`)}
           onMouseLeave={(e) => (!disabled && !isUploading) && (e.currentTarget.style.background = 'transparent')}
         >
-          {isUploading ? 'Uploading...' : 'Choose File'}
+          {isUploading ? 'جارٍ الرفع…' : 'اختر ملفاً'}
         </button>
         {fileName && (
           <span style={{
@@ -156,7 +156,7 @@ export const FileUpload: React.FC<QuestionProps> = ({
         color: '#9ca3af',
         marginTop: '6px'
       }}>
-        Max size: {(maxSize / 1048576).toFixed(1)}MB
+        الحد الأقصى للحجم: {(maxSize / 1048576).toFixed(1)} ميجابايت
       </div>
     </div>
   );

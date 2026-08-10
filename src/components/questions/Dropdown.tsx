@@ -64,7 +64,7 @@ export const Dropdown: React.FC<QuestionProps> = ({
         onFocus={(e) => e.currentTarget.style.borderColor = effectiveAccent}
         onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
       >
-        <option value="">Select an option</option>
+        <option value="">اختر خياراً</option>
         {choices.map((choice: string, index: number) => (
           <option key={index} value={choice}>
             {choice}

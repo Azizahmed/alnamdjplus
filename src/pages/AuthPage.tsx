@@ -19,7 +19,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: '15px',
   outline: 'none',
   transition: 'border-color 0.2s',
-  fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+  fontFamily: 'var(--font-arabic)',
   boxSizing: 'border-box',
 };
 
@@ -29,7 +29,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: '600',
   color: '#123A3F',
   marginBottom: '8px',
-  fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+  fontFamily: 'var(--font-arabic)',
 };
 
 export const AuthPage: React.FC = () => {
@@ -96,7 +96,7 @@ export const AuthPage: React.FC = () => {
     setError('');
 
     if (!formData.email || !formData.password) {
-      setError('يرجى ملء جميع الحقول المطلوبة');
+      setError('يرجى تعبئة جميع الحقول المطلوبة');
       return;
     }
 
@@ -110,7 +110,7 @@ export const AuthPage: React.FC = () => {
         return;
       }
       if (formData.password.length < 6) {
-        setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        setError('يجب ألا تقل كلمة المرور عن 6 أحرف');
         return;
       }
     }
@@ -134,7 +134,7 @@ export const AuthPage: React.FC = () => {
         navigate('/build', { replace: true });
       }
     } catch (err: any) {
-      setError(err.message || 'حدث خطأ. يرجى المحاولة مرة أخرى');
+      setError(err.message || 'تعذّر إتمام العملية، يرجى المحاولة مرة أخرى');
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ export const AuthPage: React.FC = () => {
     setError('');
     const code = otp.join('');
     if (code.length !== 6) {
-      setError('يرجى إدخال رمز التحقق المكون من 6 أرقام');
+      setError('يرجى إدخال رمز التحقق المكوّن من 6 أرقام');
       return;
     }
     setLoading(true);
@@ -153,7 +153,7 @@ export const AuthPage: React.FC = () => {
       await verifyEmail(otpEmail, code);
       navigate('/build', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى');
+      setError(err.message || 'رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى');
     } finally {
       setLoading(false);
     }
@@ -166,7 +166,7 @@ export const AuthPage: React.FC = () => {
       await resendVerificationEmail(otpEmail);
       setResendCooldown(60);
     } catch (err: any) {
-      setError(err.message || 'فشل إعادة إرسال رمز التحقق');
+      setError(err.message || 'تعذّرت إعادة إرسال رمز التحقق');
     }
   };
 
@@ -174,7 +174,7 @@ export const AuthPage: React.FC = () => {
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'فشل تسجيل الدخول بجوجل');
+      setError(err.message || 'تعذّر تسجيل الدخول عبر Google');
     }
   };
 
@@ -225,14 +225,14 @@ export const AuthPage: React.FC = () => {
               fontWeight: '700',
               color: '#123A3F',
               marginBottom: '8px',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+              fontFamily: 'var(--font-arabic)'
             }}>
               تحقق من بريدك الإلكتروني
             </h1>
             <p style={{
               fontSize: '14px',
               color: '#6b7280',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+              fontFamily: 'var(--font-arabic)',
               lineHeight: '1.6'
             }}>
               أرسلنا رمز تحقق مكون من 6 أرقام إلى
@@ -250,7 +250,7 @@ export const AuthPage: React.FC = () => {
               marginBottom: '20px',
               fontSize: '14px',
               color: '#dc2626',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+              fontFamily: 'var(--font-arabic)'
             }}>
               {error}
             </div>
@@ -286,7 +286,7 @@ export const AuthPage: React.FC = () => {
                     outline: 'none',
                     background: digit ? '#F7FAF8' : '#ffffff',
                     transition: 'all 0.2s',
-                    fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+                    fontFamily: 'var(--font-arabic)',
                   }}
                   onFocus={e => e.target.style.borderColor = '#123A3F'}
                   onBlur={e => { if (!digit) e.target.style.borderColor = '#EEF3F2'; }}
@@ -308,18 +308,18 @@ export const AuthPage: React.FC = () => {
                 fontWeight: '600',
                 cursor: loading || otp.some(d => !d) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
-                fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+                fontFamily: 'var(--font-arabic)',
                 marginBottom: '16px'
               }}
               onMouseEnter={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#0B2B30'; }}
               onMouseLeave={e => { if (!loading && !otp.some(d => !d)) e.currentTarget.style.background = '#123A3F'; }}
             >
-              {loading ? 'جاري التحقق...' : 'تحقق'}
+              {loading ? 'جارٍ التحقق...' : 'تحقق'}
             </button>
           </form>
 
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif' }}>
+            <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'var(--font-arabic)' }}>
               لم تستلم الرمز؟{' '}
             </span>
             <button
@@ -334,7 +334,7 @@ export const AuthPage: React.FC = () => {
                 fontSize: '14px',
                 cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
                 padding: '0',
-                fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+                fontFamily: 'var(--font-arabic)'
               }}
             >
               {resendCooldown > 0 ? `إعادة إرسال (${resendCooldown}ث)` : 'إعادة إرسال الرمز'}
@@ -351,7 +351,7 @@ export const AuthPage: React.FC = () => {
                 color: '#6AA9AF',
                 fontSize: '14px',
                 cursor: 'pointer',
-                fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+                fontFamily: 'var(--font-arabic)'
               }}
             >
               العودة إلى إنشاء حساب
@@ -403,18 +403,18 @@ export const AuthPage: React.FC = () => {
             fontWeight: '700',
             color: '#123A3F',
             marginBottom: '8px',
-            fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+            fontFamily: 'var(--font-arabic)'
           }}>
             {mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب'}
           </h1>
           <p style={{
             fontSize: '14px',
             color: '#6b7280',
-            fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+            fontFamily: 'var(--font-arabic)'
           }}>
             {mode === 'login'
               ? 'أدخل بياناتك للوصول إلى حسابك'
-              : 'أنشئ حساباً جديداً للبدء'}
+              : 'أنشئ حساباً جديداً لبدء العمل'}
           </p>
         </div>
 
@@ -427,7 +427,7 @@ export const AuthPage: React.FC = () => {
             marginBottom: '20px',
             fontSize: '14px',
             color: '#dc2626',
-            fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+            fontFamily: 'var(--font-arabic)'
           }}>
             {error}
           </div>
@@ -511,7 +511,7 @@ export const AuthPage: React.FC = () => {
               fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+              fontFamily: 'var(--font-arabic)',
               marginBottom: '16px'
             }}
             onMouseEnter={(e) => {
@@ -521,11 +521,11 @@ export const AuthPage: React.FC = () => {
               if (!loading) e.currentTarget.style.background = '#123A3F';
             }}
           >
-            {loading ? 'جاري التحميل...' : mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب'}
+            {loading ? 'جارٍ التحميل...' : mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب'}
           </button>
 
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif' }}>
+            <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'var(--font-arabic)' }}>
               أو
             </span>
           </div>
@@ -544,7 +544,7 @@ export const AuthPage: React.FC = () => {
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif',
+              fontFamily: 'var(--font-arabic)',
               marginBottom: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -560,12 +560,12 @@ export const AuthPage: React.FC = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            تسجيل الدخول بجوجل
+            تسجيل الدخول عبر Google
           </button>
         </form>
 
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif' }}>
+          <span style={{ fontSize: '14px', color: '#6b7280', fontFamily: 'var(--font-arabic)' }}>
             {mode === 'login' ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
           </span>
           <button
@@ -579,7 +579,7 @@ export const AuthPage: React.FC = () => {
               fontSize: '14px',
               cursor: 'pointer',
               padding: '0 4px',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+              fontFamily: 'var(--font-arabic)'
             }}
           >
             {mode === 'login' ? 'إنشاء حساب' : 'تسجيل الدخول'}
@@ -595,7 +595,7 @@ export const AuthPage: React.FC = () => {
               color: '#6AA9AF',
               fontSize: '14px',
               cursor: 'pointer',
-              fontFamily: 'Noto Sans Arabic, Tahoma, sans-serif'
+              fontFamily: 'var(--font-arabic)'
             }}
           >
             العودة إلى الصفحة الرئيسية

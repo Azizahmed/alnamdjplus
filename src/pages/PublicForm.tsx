@@ -395,7 +395,7 @@ export const PublicForm: React.FC = () => {
           whiteSpace: 'nowrap',
           letterSpacing: '-0.005em'
         }}>
-          made with <span style={{ color: displayAccentColor, fontWeight: '600' }}>AlnamdjPlus</span>
+          أُنشئ عبر <span style={{ color: displayAccentColor, fontWeight: '600' }}>النموذج+</span>
         </span>
       </a>
 
@@ -538,7 +538,7 @@ export const PublicForm: React.FC = () => {
               transition: 'background 0.2s'
             }}
           >
-            {submitting ? 'جاري الإرسال...' : (formData.settings?.submit_button_text || 'إرسال')}
+            {submitting ? 'جارٍ الإرسال...' : (formData.settings?.submit_button_text || 'إرسال')}
           </button>
         </form>
 
@@ -549,7 +549,7 @@ export const PublicForm: React.FC = () => {
           opacity: 0.5,
           marginTop: '48px'
         }}>
-          Made using{' '}
+          أُنشئ عبر{' '}
           <a
             href="https://alnamdjplus.app"
             target="_blank"
@@ -566,7 +566,7 @@ export const PublicForm: React.FC = () => {
               e.currentTarget.style.textDecoration = 'none';
             }}
           >
-            AlnamdjPlus
+            النموذج+
           </a>
         </div>
       </div>

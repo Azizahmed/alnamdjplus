@@ -12,7 +12,7 @@ export const LongAnswer: React.FC<QuestionProps> = ({
 }) => {
   const effectiveAccent = boldTextColor || accentColor;
   const textValue = value?.text || '';
-  const placeholder = question.settings?.placeholder || 'Your answer';
+  const placeholder = question.settings?.placeholder || 'إجابتك';
   const maxLength = question.settings?.max_length;
 
   return (

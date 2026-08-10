@@ -895,7 +895,7 @@ export const FormResponsesNew: React.FC = () => {
 
                   <div style={{ display: 'flex', gap: '4px' }}>
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let pageNum;
+                      let pageNum: number;
                       if (totalPages <= 5) {
                         pageNum = i + 1;
                       } else if (currentPage <= 3) {

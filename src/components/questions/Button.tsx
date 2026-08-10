@@ -18,7 +18,7 @@ export const Button: React.FC<QuestionProps> = ({
   boldTextColor
 }) => {
   const effectiveAccent = boldTextColor || accentColor;
-  const buttonText = question.settings?.button_text || 'Click Me';
+  const buttonText = question.settings?.button_text || 'اضغط هنا';
   const buttonStyle = question.settings?.button_style || 'primary';
   const [isClicked, setIsClicked] = React.useState(false);
 

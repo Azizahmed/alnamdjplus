@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 @font-face {
   font-family: 'TheYearofTheCamel';
@@ -47,8 +47,10 @@
   --aa-border: #D9E4E1;
   --aa-hover-bg: #F7FAF8;
 
-  /* Arabic Font */
-  --font-arabic: 'Noto Sans Arabic', Tahoma, sans-serif;
+  /* App typeface. IBM Plex Sans Arabic ships a matched Latin set, so mixed
+     Arabic/Latin strings (numbers, emails, URLs) stay in one family.
+     Noto Sans Arabic is kept only as a fallback. */
+  --font-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', Tahoma, sans-serif;
 }
 
 @keyframes spin {
@@ -3108,7 +3110,8 @@ select:focus-visible {
   margin: 16px 0 12px;
   color: var(--primary);
   font-size: clamp(34px, 6vw, 58px);
-  line-height: 1.14;
+  /* Arabic ascenders/descenders need looser leading than Latin — see .hero-title */
+  line-height: 1.4;
   letter-spacing: 0;
 }
 
@@ -3559,9 +3562,11 @@ select:focus-visible {
   margin: 0;
   font-size: clamp(42px, 6.2vw, 78px);
   font-weight: 800;
-  line-height: 1.05;
+  /* Arabic needs looser leading than Latin: the tanween sits above the line and
+     letters like ج descend well below it, so tight values make lines collide. */
+  line-height: 1.42;
   color: var(--primary);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .hero-title em {
   font-style: normal;
@@ -4017,50 +4022,6 @@ select:focus-visible {
   justify-content: center;
 }
 
-/* ---------- TICKER ---------- */
-.landing-ticker {
-  position: relative;
-  padding: 28px 0;
-  background: #fff;
-  border-top: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-}
-.landing-ticker.in { opacity: 1; transform: translateY(0); }
-.ticker-track { display: flex; width: max-content; animation: tickerScroll 28s linear infinite; }
-.ticker-set { display: flex; align-items: center; }
-.ticker-item {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 18px;
-  margin: 0 8px;
-  border-radius: 10px;
-  background: var(--bg-light);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-light);
-  white-space: nowrap;
-}
-@keyframes tickerScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.ticker-fade-left,
-.ticker-fade-right {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 80px;
-  z-index: 2;
-  pointer-events: none;
-}
-.ticker-fade-left { left: 0; background: linear-gradient(90deg, #fff, transparent); }
-.ticker-fade-right { right: 0; background: linear-gradient(270deg, #fff, transparent); }
-
 /* ---------- FEATURE SECTIONS ---------- */
 .landing-feature {
   position: relative;
@@ -4097,10 +4058,10 @@ select:focus-visible {
 .feature-title {
   font-size: clamp(30px, 4vw, 48px);
   font-weight: 800;
-  line-height: 1.12;
+  line-height: 1.38;
   color: var(--primary);
   margin: 0 0 16px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 .feature-desc {
   font-size: clamp(16px, 1.6vw, 18px);
@@ -4188,7 +4149,7 @@ select:focus-visible {
   font-weight: 800;
   color: var(--primary);
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.38;
 }
 
 .steps-grid {
@@ -4348,7 +4309,7 @@ select:focus-visible {
 .final-cta-content h2 {
   font-size: clamp(32px, 5vw, 52px);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.38;
   margin: 0 0 16px;
 }
 .final-cta-content h2 em {

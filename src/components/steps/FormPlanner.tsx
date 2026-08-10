@@ -21,7 +21,7 @@ export const FormPlanner: React.FC<FormPlannerProps> = ({ onComplete }) => {
     onComplete({
       isGenerating: true,
       user_query: description,
-      title: 'جاري إنشاء النموذج...',
+      title: 'جارٍ إنشاء النموذج...',
       description,
       questions: [],
       conditional_rules: []

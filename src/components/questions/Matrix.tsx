@@ -22,7 +22,7 @@ export const Matrix: React.FC<QuestionProps> = ({
   const effectiveAccent = boldTextColor || accentColor;
   const matrixAnswers = value?.matrix_answers || {};
   const rows = normalizeToArray(question.settings?.rows, 'Row');
-  const columns = normalizeToArray(question.settings?.columns, 'Column');
+  const columns = normalizeToArray(question.settings?.columns, 'عمود');
 
   const handleChange = (row: string, column: string) => {
     onChange({

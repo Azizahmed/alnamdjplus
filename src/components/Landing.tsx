@@ -133,10 +133,10 @@ const MockPromptCard: React.FC<{ className?: string; style?: React.CSSProperties
       </div>
     </div>
     <div className="mock-chips">
-      <span>أنشئ نموذج ملاحظات العملاء مع التقييم والتعليقات</span>
-      <span>أنشئ نموذج تسجيل حدث مع الاسم والبريد والتفضيلات الغذائية</span>
-      <span>أنشئ استبيان رضا المنتج مع اختيار متعدد والتقييمات</span>
-      <span>ابنِ نموذج طلب وظيفة مع رفع السيرة الذاتية والخبرة العملية</span>
+      <span>استبيان لقياس رضا العملاء مع تقييم وملاحظات</span>
+      <span>نموذج تسجيل في فعالية مع الاسم والبريد وبيانات الحضور</span>
+      <span>استبيان تقييم منتج مع اختيار متعدد ومقاييس تقدير</span>
+      <span>نموذج طلب توظيف مع إرفاق السيرة الذاتية والخبرات</span>
     </div>
   </div>
 );
@@ -157,21 +157,21 @@ const MockBuilderCard: React.FC<{ className?: string; style?: React.CSSPropertie
       <span className="mock-tb-btn primary">+ إضافة</span>
     </div>
     <div className="mock-builder-body">
-      <h4 className="mock-builder-title">نموذج ملاحظات العملاء</h4>
-      <p className="mock-builder-desc">نحن نقدر رأيك! يرجى تقييم تجربتك وتقديم تعليقاتك لمساعدتنا على التحسين.</p>
+      <h4 className="mock-builder-title">استبيان رضا العملاء</h4>
+      <p className="mock-builder-desc">رأيك يسهم في تطوير خدماتنا. نرجو تقييم تجربتك وإضافة ملاحظاتك.</p>
       <div className="mock-question">
         <div className="mock-q-drag"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg></div>
         <div className="mock-q-content">
-          <div className="mock-q-text">ما مدى رضاك العام عن خدماتنا؟</div>
-          <div className="mock-q-hint">غير راضٍ على الإطلاق، 5 = راضٍ جداً</div>
+          <div className="mock-q-text">ما مدى رضاك عن مستوى الخدمة؟</div>
+          <div className="mock-q-hint">1 = غير راضٍ إطلاقاً، 5 = راضٍ تماماً</div>
           <div className="mock-stars">★★★★★</div>
         </div>
       </div>
       <div className="mock-question">
         <div className="mock-q-drag"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg></div>
         <div className="mock-q-content">
-          <div className="mock-q-text">ما مدى احتمالية أن توصي بنا للآخرين؟</div>
-          <div className="mock-q-hint">من 0 (غير محتمل) إلى 10 (محتمل جداً)</div>
+          <div className="mock-q-text">ما احتمالية أن توصي بخدماتنا لغيرك؟</div>
+          <div className="mock-q-hint">من 0 (غير مرجّح) إلى 10 (مرجّح جداً)</div>
           <div className="mock-scale">
             <span>القيمة الدنيا</span>
             <span>القيمة القصوى</span>
@@ -198,7 +198,7 @@ const MockBuilderCard: React.FC<{ className?: string; style?: React.CSSPropertie
 /* ------------------------------------------------------------------ */
 const MockThemeCard: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
   <div className={`landing-mock-card mock-theme ${className || ''}`} style={style}>
-    <div className="mock-theme-title">اختر مظهر النموذج</div>
+    <div className="mock-theme-title">اختر سمة النموذج</div>
     <div className="mock-theme-grid">
       {[
         { name: 'Executive Ink', colors: ['#2D3436','#636E72','#DFE6E9','#F5F6FA'] },
@@ -236,7 +236,7 @@ const MockAssistantCard: React.FC<{ className?: string; style?: React.CSSPropert
       </div>
       <div>
         <div className="mock-asst-title">مساعد النموذج</div>
-        <div className="mock-asst-sub">عدل النموذج أو حلل البيانات</div>
+        <div className="mock-asst-sub">عدّل النموذج أو حلّل البيانات</div>
       </div>
       <button className="mock-asst-close">×</button>
     </div>
@@ -245,13 +245,13 @@ const MockAssistantCard: React.FC<{ className?: string; style?: React.CSSPropert
         <div className="mock-asst-orb">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         </div>
-        <div className="mock-asst-empty-title">عدل نموذجك أو حلل الردود</div>
-        <div className="mock-asst-empty-hint">"أضف حقلاً للبريد الإلكتروني أو "لخص ردودي</div>
+        <div className="mock-asst-empty-title">عدّل نموذجك أو حلّل الردود</div>
+        <div className="mock-asst-empty-hint">«أضف حقلاً للبريد الإلكتروني» أو «لخّص الردود»</div>
       </div>
     </div>
     <div className="mock-asst-footer">
       <div className="mock-asst-input">
-        <span>عدل نموذجك أو حلل الردود</span>
+        <span>عدّل نموذجك أو حلّل الردود</span>
         <div className="mock-asst-send">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
         </div>
@@ -281,7 +281,6 @@ export const Landing: React.FC = () => {
 
   /* Scroll-triggered sections */
   const heroAnim    = useInView<HTMLDivElement>();
-  const logosAnim   = useInView<HTMLDivElement>();
   const feat1Anim   = useInView<HTMLDivElement>();
   const feat2Anim   = useInView<HTMLDivElement>();
   const feat3Anim   = useInView<HTMLDivElement>();
@@ -303,8 +302,8 @@ export const Landing: React.FC = () => {
             <img src="/logo.png?v=20260410" alt="النموذج" className="landing-nav-logo" />
           </div>
           <nav className="landing-nav-links">
-            <button onClick={scrollToProduct}>المنتج</button>
-            <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>كيف يعمل</button>
+            <button onClick={scrollToProduct}>المنصة</button>
+            <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>آلية العمل</button>
             <button onClick={() => navigate('/auth')}>تسجيل الدخول</button>
           </nav>
           <button className="landing-nav-cta" onClick={() => navigate('/auth')}>ابدأ مجاناً</button>
@@ -318,24 +317,24 @@ export const Landing: React.FC = () => {
           <div className="hero-copy">
             <div className="hero-badge">
               <span className="hero-badge-pulse" />
-              منشئ نماذج عربي مدعوم بالذكاء الاصطناعي
+              منصة عربية لإنشاء النماذج بالذكاء الاصطناعي
             </div>
             <h1 className="hero-title">
-              <span className="hero-line">حوّل فكرتك</span>
-              <span className="hero-line">إلى <em>نموذج</em> جاهز</span>
-              <span className="hero-line">في ثوانٍ</span>
+              <span className="hero-line">اجعل فكرتك</span>
+              <span className="hero-line"><em>نموذجاً</em> احترافياً</span>
+              <span className="hero-line">جاهزاً للنشر</span>
             </h1>
             <p className="hero-desc">
-              اكتب وصفاً بالعربية، واترك الذكاء الاصطناعي يبني لك نموذجاً احترافياً قابلاً للتعديل والنشر والتحليل — كل ذلك من مكان واحد.
+              اكتب وصف النموذج بالعربية، ليتولّى الذكاء الاصطناعي بناء الأسئلة والمنطق الشرطي والتصميم — ثم عدّله وانشره وحلّل نتائجه من مكان واحد.
             </p>
             <div className="hero-actions">
               <button className="hero-btn-primary" onClick={() => navigate('/auth')}>
-                <span>ابدأ بناء نموذج</span>
+                <span>أنشئ نموذجك الأول</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
               </button>
               <button className="hero-btn-secondary" onClick={scrollToProduct}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>شاهد المنتج</span>
+                <span>استعرض المنصة</span>
               </button>
             </div>
             <div className="hero-trust">
@@ -344,7 +343,7 @@ export const Landing: React.FC = () => {
                   <div key={i} className="hero-avatar" style={{ background: `hsl(${170 + i*15}, 55%, ${32 + i*4}%)` }}>{l}</div>
                 ))}
               </div>
-              <span>انضم إلى مئات المستخدمين العرب</span>
+              <span>مصمّمة للفرق والمؤسسات في المنطقة العربية</span>
             </div>
           </div>
 
@@ -362,33 +361,18 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* ========== LOGO TICKER ========== */}
-      <section className={`landing-ticker ${logosAnim.visible ? 'in' : ''}`} ref={logosAnim.ref}>
-        <div className="ticker-fade-left" />
-        <div className="ticker-track">
-          {[...Array(2)].map((_, setIdx) => (
-            <div key={setIdx} className="ticker-set">
-              {['استبيانات رضا العملاء','طلبات التوظيف','نماذج التسجيل','جمع الملاحظات','طلبات الخدمة','تقييم الفعاليات','البحث العلمي','التسجيل في الدورات','الاقتراحات والشكاوى','استبيانات السوق'].map((t) => (
-                <span key={`${setIdx}-${t}`} className="ticker-item">{t}</span>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="ticker-fade-right" />
-      </section>
-
       {/* ========== FEATURE 1: AI PROMPT ========== */}
       <section className={`landing-feature ${feat1Anim.visible ? 'in' : ''}`} ref={feat1Anim.ref}>
         <div className="feature-content">
           <div className="feature-badge">الذكاء الاصطناعي</div>
-          <h2 className="feature-title">ما النموذج الذي تحتاجه؟<br />فقط اكتب وصفاً...</h2>
+          <h2 className="feature-title">من وصف مكتوب<br />إلى نموذج متكامل</h2>
           <p className="feature-desc">
-            لا حاجة للبدء من صفحة فارغة. اكتب فكرة النموذج بالعربية، وسيولّد لك الذكاء الاصطناعي بنية كاملة من الأسئلة والمنطق الشرطي والتصميم.
+            لا تبدأ من صفحة فارغة. اكتب فكرة النموذج بالعربية، ليولّد الذكاء الاصطناعي بنية متكاملة من الأسئلة والمنطق الشرطي والتصميم المناسب.
           </p>
           <ul className="feature-list">
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> أكثر من 15 نوع سؤال</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> دعم كامل للغة العربية</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> منطق شرطي ذكي</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> دعم كامل للغة العربية والكتابة من اليمين</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> اقتراح المنطق الشرطي تلقائياً</li>
           </ul>
         </div>
         <div className="feature-visual feature-visual-left">
@@ -405,14 +389,14 @@ export const Landing: React.FC = () => {
         </div>
         <div className="feature-content">
           <div className="feature-badge">المحرر</div>
-          <h2 className="feature-title">حرّر، صمّم، ونشر<br />من مساحة عمل واحدة</h2>
+          <h2 className="feature-title">التحرير والتصميم والنشر<br />في مساحة عمل واحدة</h2>
           <p className="feature-desc">
-            واجهة عملية تضع الإنشاء والمعاينة والتصميم في مسار واحد واضح. عدّل الأسئلة بسحب وإفلات، وطبّق المنطق الشرطي، وشاهد التغييرات لحظياً.
+            واجهة تجمع الإنشاء والمعاينة والتصميم في مسار واحد واضح. رتّب الأسئلة بالسحب والإفلات، وطبّق المنطق الشرطي، وتابع التغييرات فور إجرائها.
           </p>
           <ul className="feature-list">
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> سحب وإفلات بديهي</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> معاينة حية أثناء التحرير</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> منطق شرطي متقدم</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> ترتيب الأسئلة بالسحب والإفلات</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> معاينة فورية أثناء التحرير</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تحكم كامل في الحقول وقواعد التحقق</li>
           </ul>
         </div>
       </section>
@@ -420,15 +404,15 @@ export const Landing: React.FC = () => {
       {/* ========== FEATURE 3: THEMES ========== */}
       <section className={`landing-feature ${feat3Anim.visible ? 'in' : ''}`} ref={feat3Anim.ref}>
         <div className="feature-content">
-          <div className="feature-badge">التصميم</div>
-          <h2 className="feature-title">مظهر يناسب<br />هويتك البصرية</h2>
+          <div className="feature-badge">الهوية البصرية</div>
+          <h2 className="feature-title">مظهر يعكس<br />هوية مؤسستك</h2>
           <p className="feature-desc">
-            اختر من بين مجموعة من الثيمات الجاهزة المصممة للاستخدامات المختلفة، أو صمّم ألوانك الخاصة. كل ثيم يحافظ على وضوح القراءة وجمالية التجربة.
+            اختر من سمات جاهزة مصمّمة لمجالات استخدام مختلفة، أو اضبط ألوانك الخاصة. تحافظ كل سمة على وضوح القراءة واتساق التجربة البصرية.
           </p>
           <ul className="feature-list">
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> 8 ثيمات جاهزة</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تخصيص الألوان بالكامل</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> شعار وترويسة مخصصة</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> ثماني سمات جاهزة</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تحكم كامل في نظام الألوان</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> شعار وترويسة مخصّصان</li>
           </ul>
         </div>
         <div className="feature-visual feature-visual-left">
@@ -445,14 +429,14 @@ export const Landing: React.FC = () => {
         </div>
         <div className="feature-content">
           <div className="feature-badge">المساعد الذكي</div>
-          <h2 className="feature-title">محلل بياناتك<br />وصانع نماذجك</h2>
+          <h2 className="feature-title">مساعد يحلّل نتائجك<br />ويعدّل نماذجك</h2>
           <p className="feature-desc">
-            تحدث مع مساعدك الذكي لتحليل الردود، استخلاص الرؤى، إضافة حقول جديدة، أو تلخيص النتائج — كل ذلك باللغة العربية.
+            اطلب من المساعد تحليل الردود، أو استخلاص المؤشرات، أو إضافة حقول جديدة، أو تلخيص النتائج — بالعربية ومن داخل المنصة.
           </p>
           <ul className="feature-list">
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تحليل الردود بالذكاء الاصطناعي</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> توليد رسائل البريد التلقائية</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تعديل النماذج بالمحادثة</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تحليل الردود واستخلاص المؤشرات</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> صياغة رسائل البريد تلقائياً</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg> تعديل النماذج عبر المحادثة</li>
           </ul>
         </div>
       </section>
@@ -460,14 +444,14 @@ export const Landing: React.FC = () => {
       {/* ========== HOW IT WORKS ========== */}
       <section id="how-it-works" className={`landing-steps ${stepsAnim.visible ? 'in' : ''}`} ref={stepsAnim.ref}>
         <div className="steps-header">
-          <div className="steps-badge">كيف يعمل</div>
-          <h2 className="steps-title">من الفكرة إلى البيانات<br />في 3 خطوات</h2>
+          <div className="steps-badge">آلية العمل</div>
+          <h2 className="steps-title">من الفكرة إلى النتائج<br />في ثلاث خطوات</h2>
         </div>
         <div className="steps-grid">
           {[
-            { num: '01', title: 'صِف نموذجك', text: 'اكتب وصفاً بالعربية لما تحتاجه، وستولّد الذكاء الاصطناعي نموذجاً كاملاً من الأسئلة والتصميم.' },
-            { num: '02', title: 'حرّر وصمّم', text: 'عدّل الأسئلة بالسحب والإفلات، طبّق الثيم المناسب، وأضف المنطق الشرطي ببضع نقرات.' },
-            { num: '03', title: 'انشر وحلّل', text: 'احصل على رابط فوري، شاركه مع جمهورك، وتابع الردود والتحليلات ومحادثة الذكاء الاصطناعي.' },
+            { num: '01', title: 'صِف نموذجك', text: 'اكتب بالعربية ما تحتاجه، ليولّد الذكاء الاصطناعي نموذجاً متكاملاً بأسئلته وتصميمه.' },
+            { num: '02', title: 'حرّر وصمّم', text: 'رتّب الأسئلة، واختر السمة المناسبة، وأضف المنطق الشرطي في خطوات قليلة.' },
+            { num: '03', title: 'انشر وحلّل', text: 'احصل على رابط للنشر، وشاركه مع جمهورك، وتابع الردود والتحليلات أولاً بأول.' },
           ].map((s, i) => (
             <div key={i} className="step-card">
               <div className="step-number">{s.num}</div>
@@ -486,9 +470,9 @@ export const Landing: React.FC = () => {
         <div className="stats-grid">
           {[
             { value: '15+', label: 'نوع سؤال' },
-            { value: '100%', label: 'دعم العربية' },
-            { value: '3x', label: 'أسرع في الإنشاء' },
-            { value: '∞', label: 'نماذج غير محدودة' },
+            { value: '8', label: 'سمات جاهزة' },
+            { value: '100%', label: 'دعم اللغة العربية' },
+            { value: '∞', label: 'نماذج بلا حدود' },
           ].map((s, i) => (
             <div key={i} className="stat-item">
               <div className="stat-value">{s.value}</div>
@@ -506,13 +490,13 @@ export const Landing: React.FC = () => {
           <div className="cta-orb cta-orb-3" />
         </div>
         <div className="final-cta-content">
-          <h2>ابدأ بـ <em>نموذج</em> واضح<br />وحسّنه من البيانات</h2>
-          <p>أنشئ، انشر، واقرأ الردود من واجهة واحدة مصممة للفرق العربية.</p>
+          <h2>ابدأ بـ<em>نموذج</em> واضح<br />وطوّره بالبيانات</h2>
+          <p>أنشئ نماذجك وانشرها واقرأ نتائجها من واجهة واحدة مصمّمة للفرق العربية.</p>
           <button className="final-cta-btn" onClick={() => navigate('/auth')}>
-            <span>إنشاء أول نموذج</span>
+            <span>أنشئ نموذجك الأول</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
           </button>
-          <div className="final-cta-note">مجاني تماماً — لا يحتاج بطاقة ائتمان</div>
+          <div className="final-cta-note">ابدأ مجاناً — دون الحاجة إلى بطاقة ائتمان</div>
         </div>
       </section>
 
