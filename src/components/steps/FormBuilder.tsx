@@ -996,12 +996,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
           direction: 'rtl',
           fontFamily: resolvedTheme.fontFamily
           }}>
-          {/* Form Title & Description - Sticky at top */}
+          {/* Form Title & Description - scrolls with the rest of the form */}
             <div className="builder-form-header" style={{
-            position: 'sticky',
-            top: 0,
             background: resolvedBackground,
-            zIndex: 5,
             padding: '40px 24px 24px 64px',
             borderBottom: `1px solid ${resolvedTheme.border}`,
             marginBottom: '24px'
@@ -1016,7 +1013,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ formData: initialFormD
                 description={formData.description || ''}
                 settings={formData.settings || {}}
                 editable={true}
-                titlePlaceholder="Form title"
+                titlePlaceholder={t.formTitle}
                 descriptionPlaceholder={t.addDescription}
                 onTitleChange={handleTitleUpdate}
                 onDescriptionChange={handleDescriptionUpdate}
